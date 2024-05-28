@@ -1,5 +1,10 @@
-﻿#include "api_extend/gme_cstrapi.hxx"
-
+﻿/*********************************************************************
+ * @file    gme_cstrapi.cxx
+ * @brief
+ * @details 属于 api extend 示例
+ * @author  CastaneaG
+ * @date    2024.5.21
+ *********************************************************************/
 #include <stdio.h>
 
 #include <acis/alltop.hxx>
@@ -12,6 +17,8 @@
 #include <acis/lists.hxx>
 #include <acis/module.hxx>
 #include <acis/sweepapi.hxx>
+
+#include "template/gme_cstrapi.hxx"
 outcome api_gme_sweep_make_cuboid(double width, double depth, double height, BODY*& body) {
     DEBUG_LEVEL(DEBUG_CALLS)
     fprintf(debug_file_ptr, "calling api_gme_sweep_make_cuboid\n");
@@ -26,7 +33,7 @@ outcome api_gme_sweep_make_cuboid(double width, double depth, double height, BOD
     }
 
     BODY* sheet = NULL;
-    SPAposition origin(-(width / 2.0), -(depth / 2.0), -height / 2);
+    SPAposition origin(-width / 2.0, -depth / 2.0, -height / 2);
     SPAposition left(-width / 2.0, depth / 2.0, -height / 2);
     SPAposition right(width / 2.0, -depth / 2.0, -height / 2);
     FACE* fprofile = NULL;

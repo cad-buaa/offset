@@ -15,7 +15,7 @@
 #include <acis_utils/acis_utils.hpp>
 
 // GME
-#include "runtime_method/edge_count_args.hxx"
+#include "template/edge_count_args.hxx"
 
 // ====================================================================
 
