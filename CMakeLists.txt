@@ -14,8 +14,8 @@ set(MODULE_VERSION
 option(MODULE_IND_BUILD "build as module(OFF) or as independent project(ON)" ON
 )# module独立编译选项
 
-if(${PROJ_SUPER_BUILD})
-    set(MODULE_IND_BUILD OFF) # 如果通过上层构建，则强制更改为“作为模块build”
+if(${PROJ_SUPER_BUILD}) # ${PROJ_SUPER_BUILD} 若未定义则为FALSE
+    set(MODULE_IND_BUILD OFF) # 如果该项目作为模块通过上层构建，则强制更改为“作为模块build”
 endif()
 
 set(MODULE_SUPER_BUILD ${MODULE_IND_BUILD}) # independent build IS super-build
@@ -37,7 +37,7 @@ set(MODULE_TARGET_NAME ${PROJECT_NAME})
 # ---------------------------------------------------------------------------------------
 file(MAKE_DIRECTORY "${MODULE_INCLUDE_DIR}/${MODULE_NAME_LOWER}")
 configure_file("${CMAKE_CURRENT_LIST_DIR}/version.h.in"
-               "${MODULE_INCLUDE_DIR}/${MODULE_NAME_LOWER}_version.h" @ONLY)
+               "${MODULE_INCLUDE_DIR}/${MODULE_NAME_LOWER}_version.h" @ONLY) # 根据.h.in生成.h文件
 
 # ---------------------------------------------------------------------------------------
 # Options and vars
@@ -47,10 +47,11 @@ set(PROPERTY_PREFIX "${PROJECT_NAME}")
 # ---------------------------------------------------------------------------------------
 # Set build and c++ options
 # ---------------------------------------------------------------------------------------
+# 若内置变量CMAKE_BUILD_TYPE未被设置，则强制将其设为字符串"Release"，并存在Cache中
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE
         "Release"
-        CACHE STRING "Choose Release or Debug" FORCE)
+        CACHE STRING "Choose Release or Debug" FORCE) 
 endif()
 
 if(NOT CMAKE_CONFIGURATION_TYPES)
@@ -62,8 +63,8 @@ endif()
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON) # force C++20
-set(CMAKE_CXX_EXTENSIONS OFF)
-set(CMAKE_DEBUG_POSTFIX d)
+set(CMAKE_CXX_EXTENSIONS OFF) 
+set(CMAKE_DEBUG_POSTFIX d) # 使用 Debug 配置构建时会为文件添加后缀 d 
 
 # make sure __cplusplus is defined when using msvc and enable parallel build
 if(MSVC)
@@ -82,7 +83,7 @@ endif()
 # ---------------------------------------------------------------------------------------
 # Options
 # ---------------------------------------------------------------------------------------
-set(MODULE_INDBUILD_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/.ind_build")
+set(MODULE_INDBUILD_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/.ind_build") # 独立构建前缀路径
 
 # # 预定义宏
 add_definitions(-DUNICODE -D_UNICODE)
@@ -102,7 +103,7 @@ set(MODULE_OUT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/out)
 set(MODULE_BUILD_DEPS_DIR ${MODULE_BUILD_DIR}/_deps) # FetchContent_Declare的工作路径
 set(MODULE_COMMON_INCLUDE_DIRS ${MODULE_INCLUDE_DIR} ${MODULE_DEPS_DIR})
 
-# 构建输出directory
+# 根据构建配置来设置输出directory 这里用到CMake生成器表达式
 set(MODULE_OUT_DIR_DIFF_BUILD_TYPE
     "$<$<CONFIG:Debug>:"
     "${MODULE_OUT_DIR}/Debug"
@@ -116,6 +117,7 @@ set(MODULE_OUT_DIR_DIFF_BUILD_TYPE
     "$<$<CONFIG:MinSizeRel>:"
     "${MODULE_OUT_DIR}/MinSizeRel"
     ">")
+# 生成器表达式生成的字符串包含分号作为分隔符，删除得到路径字符串。
 string(REPLACE ";" "" MODULE_OUT_DIR_DIFF_BUILD_TYPE
                ${MODULE_OUT_DIR_DIFF_BUILD_TYPE})
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${MODULE_OUT_DIR_DIFF_BUILD_TYPE}
@@ -156,10 +158,11 @@ get_all_sources(${MODULE_SOURCE_DIR} TARGET_SOURCE_FILES)
 if("${TARGET_SOURCE_FILES}" STREQUAL "")
     message(WARNING "This folder has no sources!!!")
 else()
+    # 在当前目录下创建了一个名为 MODULE_TARGET_NAME 的动态库目标，使用之前获取的头文件与源文件
     add_library(${MODULE_TARGET_NAME} SHARED ${TARGET_HEADER_FILES}
                                              ${TARGET_SOURCE_FILES}) # 添加链接库输出
-
-    set_property(TARGET ${MODULE_TARGET_NAME} PROPERTY FOLDER
+    # 为刚创建的动态库设置FOLDER属性，这个动态库被放置在项目中以 PROPERTY_PREFIX 命名的文件夹下
+    set_property(TARGET ${MODULE_TARGET_NAME} PROPERTY FOLDER 
                                                        ${PROPERTY_PREFIX})
 
     # ACIS
@@ -169,14 +172,19 @@ else()
     # 设置目标引用
     target_include_directories(
         ${MODULE_TARGET_NAME}
-        PUBLIC "$<BUILD_INTERFACE:${MODULE_COMMON_INCLUDE_DIRS}>"
+        PUBLIC "$<BUILD_INTERFACE:${MODULE_COMMON_INCLUDE_DIRS}>"                                                       
                "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>")
+
+# 在这里可以发现 target_include_directories 中的 ${MODULE_COMMON_INCLUDE_DIRS} 包含 add_library 时的 ${MODULE_INCLUDE_DIR}
+# 因为 add_library 命令只是定义了目标，target_include_directories设置目标的头文件包含目录。
+# 这样使用MODULE_COMMON_INCLUDE_DIRS集中管理头文件，便于维护迁移。
 
 endif()
 
 # ---------------------------------------------------------------------------------------
 # Binary
 # ---------------------------------------------------------------------------------------
+# add_subdirectory 后，会执行对应子目录中的CMakeList文件
 if(${MODULE_BUILD_SAMPLES})
     add_subdirectory("${MODULE_INDBUILD_PREFIX}/samples")
 endif()
@@ -200,11 +208,12 @@ endif()
 if(${MODULE_BUILD_FORMAT})
     find_package(Python REQUIRED)
 
+    #定义了名为 format 的自定义目标，并在${CMAKE_CURRENT_SOURCE_DIR}目录下运行format.py
     add_custom_target(
         format
         COMMAND ${Python_EXECUTABLE} ${MODULE_SCRIPTS_DIR}/format.py
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-    set_property(TARGET format PROPERTY FOLDER "${PROPERTY_PREFIX}")
+    set_property(TARGET format PROPERTY FOLDER "${PROPERTY_PREFIX}") # 放置在项目中以 PROPERTY_PREFIX 命名的文件夹下
 
     add_custom_target(
         format-check

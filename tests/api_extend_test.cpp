@@ -14,7 +14,7 @@
 #include <acis_utils/same_entity.hpp>
 
 // GME
-#include "api_extend/gme_cstrapi.hxx"
+#include "template/gme_cstrapi.hxx"
 
 // ====================================================================
 
