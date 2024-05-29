@@ -44,5 +44,6 @@ static logical edge_count(void* entptr, METHOD_ARGS const& argref) {
     return TRUE;
 }
 
-static METHOD_ID edge_count_method_id("count", "edge_count_args");               // 关联方法名 count 和参数类型 edge_count_args, 前者为自定方法名，后者为参数列表标识符。
-static MethodFunction xxx = BODY::add_method(edge_count_method_id, edge_count);  // 将 edge_count 函数注册为 BODY 类的 "count" 方法的实现。xxx的作用是确保在程序启动时自动完成方法注册。
+// Must regist in exe, not dll
+// static METHOD_ID edge_count_method_id("count", "edge_count_args");               // 关联方法名 count 和参数类型 edge_count_args, 前者为自定方法名，后者为参数列表标识符。
+// static MethodFunction xxx = BODY::add_method(edge_count_method_id, edge_count);  // 将 edge_count 函数注册为 BODY 类的 "count" 方法的实现。xxx的作用是确保在程序启动时自动完成方法注册。

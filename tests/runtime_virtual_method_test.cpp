@@ -28,21 +28,21 @@ class runtime_virtual_method_test : public ::testing::Test {
     void TearDown() override { terminate_acis(level); }
 };
 
-TEST_F(runtime_virtual_method_test, EDGE_COUNT) {
-    BODY* body = nullptr;
-    int gme_edge_num = 0;
-    int acis_edge_num = 0;
-
-    API_BEGIN
-    api_make_cuboid(10.0, 10.0, 10.0, body);
-    // 调用count方法
-    logical ok = body->call_method(METHOD_ID("count", "edge_count_args"), EDGE_COUNT_ARGS(gme_edge_num));
-
-    ENTITY_LIST edge_list;
-    get_edges(body, edge_list);
-    acis_edge_num = edge_list.count();
-
-    API_END
-
-    EXPECT_TRUE(gme_edge_num == acis_edge_num);
-}
+// TEST_F(runtime_virtual_method_test, EDGE_COUNT) {
+//     BODY* body = nullptr;
+//     int gme_edge_num = 0;
+//     int acis_edge_num = 0;
+//
+//     API_BEGIN
+//     api_make_cuboid(10.0, 10.0, 10.0, body);
+//     // 调用count方法
+//     logical ok = body->call_method(METHOD_ID("count", "edge_count_args"), EDGE_COUNT_ARGS(gme_edge_num));
+//
+//     ENTITY_LIST edge_list;
+//     get_edges(body, edge_list);
+//     acis_edge_num = edge_list.count();
+//
+//     API_END
+//
+//     EXPECT_TRUE(gme_edge_num == acis_edge_num);
+// }
