@@ -17,6 +17,7 @@
 !3rdparty/*.dll
 !resources/*.png
 !resources/*.jpg
+!.github/
 # Generated dir of Doxygen
 docs/html/
 # Special

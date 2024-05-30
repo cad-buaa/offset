@@ -70,22 +70,30 @@ function(find_acis _version)
 endfunction(find_acis _version)
 
 macro(target_include_acis _target_name)
-    target_include_directories( # 设置目标的头文件包含目录
+    target_include_directories(
+        # 设置目标的头文件包含目录
         ${_target_name}
         PUBLIC "$<BUILD_INTERFACE:${ACIS_HEADERS_DIR}>"
-               "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>") # CMAKE_INSTALL_INCLUDEDIR 默认为项目include目录，在cache中可见
+               "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
+    )# CMAKE_INSTALL_INCLUDEDIR 默认为项目include目录，在cache中可见
 endmacro(target_include_acis _target_name)
 
 macro(target_link_acis _target_name _dest_dir)
     # 为目标链接库文件
-    target_link_libraries(${_target_name} PUBLIC debug ${ACIS_LIB_DEB}  # debug 和 optimized 关键字用于区分 debug 和 release 配置下使用的 ACIS 库文件。
-                                                 optimized ${ACIS_LIB_REL})
+    target_link_libraries(
+        ${_target_name}
+        PUBLIC debug ${ACIS_LIB_DEB} # debug 和 optimized 关键字用于区分 debug 和 release
+                                     # 配置下使用的 ACIS 库文件。
+               optimized ${ACIS_LIB_REL})
     set(_input_file
         "$<$<CONFIG:Debug>:${ACIS_DLL_DEB}>$<$<NOT:$<CONFIG:Debug>>:${ACIS_DLL_REL}>"
     )
     # 在指定目标 构建完成后 将DLL文件拷贝到目标输出目录
-    add_custom_command( 
+    add_custom_command(
         TARGET ${_target_name}
         POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy ${_input_file} ${_dest_dir})
-endmacro(target_link_acis _target_name _dest_dir)
+endmacro(
+    target_link_acis
+    _target_name
+    _dest_dir)

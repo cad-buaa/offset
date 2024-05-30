@@ -33,7 +33,7 @@ TEST_F(api_extend_test, api_extend) {
 
     API_BEGIN
     api_make_cuboid(2.0, 2.0, 2.0, acis_body);
-    api_gme_sweep_make_cuboid(2.0, 2.0, 2.0, gme_body);
+    gme_api_sweep_make_cuboid(2.0, 2.0, 2.0, gme_body);
 
     API_END
 

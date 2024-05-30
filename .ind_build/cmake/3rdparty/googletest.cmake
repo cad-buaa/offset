@@ -2,11 +2,13 @@
     message(
         STATUS
             "=================================================================")
-    option(DOWNLOAD_GOOGLETEST "Download googletest library" OFF) # 选项：强制下载
-    message(STATUS "Start finding third party: googletest.")
-    # 判断 gtest 是否存在
-    if(DOWNLOAD_GOOGLETEST OR (NOT EXISTS ${gtest_SOURCE_DIR}) OR (NOT EXISTS ${gtest_BINARY_DIR}))
-        message(WARNING "Need Gtest.")
+    message(STATUS "Start finding third party: gtest.")
+
+    # find in system
+    find_package(gtest CONFIG QUIET)
+
+    if(NOT ${gtest_FOUND})
+        message(WARNING "Gtest NOT found in system.")
 
         # Options
         set(INSTALL_GTEST OFF)
@@ -15,7 +17,8 @@
         # Fetch
         include(FetchContent) # CMake 的 FetchContent 模块，用于远程获取第三方库
         message(STATUS "Start FetchContent_Declare: gtest.")
-        FetchContent_Declare( # 声明第三方依赖
+        FetchContent_Declare(
+            # 声明第三方依赖
             googletest
             PREFIX "${CMAKE_BINARY_DIR}/_deps/gtest"
             GIT_REPOSITORY https://github.com/google/googletest.git
@@ -25,6 +28,8 @@
         message(STATUS "Fetch Over: gtest.")
     else()
         message(STATUS "Third party found: gtest.")
+        add_library(gtest ALIAS GTest::gtest)
+        add_library(gtest_main ALIAS GTest::gtest_main)
     endif()
 
     message(

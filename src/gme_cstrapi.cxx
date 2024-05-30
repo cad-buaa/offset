@@ -5,6 +5,8 @@
  * @author  CastaneaG
  * @date    2024.5.21
  *********************************************************************/
+#include "template/gme_cstrapi.hxx"
+
 #include <stdio.h>
 
 #include <acis/alltop.hxx>
@@ -17,9 +19,7 @@
 #include <acis/lists.hxx>
 #include <acis/module.hxx>
 #include <acis/sweepapi.hxx>
-
-#include "template/gme_cstrapi.hxx"
-outcome api_gme_sweep_make_cuboid(double width, double depth, double height, BODY*& body) {
+outcome gme_api_sweep_make_cuboid(double width, double depth, double height, BODY*& body) {
     DEBUG_LEVEL(DEBUG_CALLS)
     fprintf(debug_file_ptr, "calling api_gme_sweep_make_cuboid\n");
 
@@ -60,7 +60,7 @@ outcome api_gme_sweep_make_cuboid(double width, double depth, double height, BOD
     API_END
 
     DEBUG_LEVEL(DEBUG_FLOW) {
-        fprintf(debug_file_ptr, "leaving api_gme_sweep_make_cuboid : % s\n", find_err_ident(result.error_number()));
+        fprintf(debug_file_ptr, "calling gme_api_sweep_make_cuboid\n");
     }
 
     return result;

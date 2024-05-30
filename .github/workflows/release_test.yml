@@ -30,4 +30,4 @@ jobs:
 
       - name: run test
         run: |          
-          ./out/Release/tests.exe
+          ./out/Release/tests.exe         

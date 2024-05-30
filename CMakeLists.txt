@@ -36,8 +36,10 @@ set(MODULE_TARGET_NAME ${PROJECT_NAME})
 # Create module header folder and Generate version.h
 # ---------------------------------------------------------------------------------------
 file(MAKE_DIRECTORY "${MODULE_INCLUDE_DIR}/${MODULE_NAME_LOWER}")
-configure_file("${CMAKE_CURRENT_LIST_DIR}/version.h.in"
-               "${MODULE_INCLUDE_DIR}/${MODULE_NAME_LOWER}_version.h" @ONLY) # 根据.h.in生成.h文件
+configure_file(
+    "${CMAKE_CURRENT_LIST_DIR}/version.h.in"
+    "${MODULE_INCLUDE_DIR}/${MODULE_NAME_LOWER}_version.h" @ONLY
+)# 根据.h.in生成.h文件
 
 # ---------------------------------------------------------------------------------------
 # Options and vars
@@ -51,7 +53,7 @@ set(PROPERTY_PREFIX "${PROJECT_NAME}")
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE
         "Release"
-        CACHE STRING "Choose Release or Debug" FORCE) 
+        CACHE STRING "Choose Release or Debug" FORCE)
 endif()
 
 if(NOT CMAKE_CONFIGURATION_TYPES)
@@ -63,8 +65,8 @@ endif()
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON) # force C++20
-set(CMAKE_CXX_EXTENSIONS OFF) 
-set(CMAKE_DEBUG_POSTFIX d) # 使用 Debug 配置构建时会为文件添加后缀 d 
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_DEBUG_POSTFIX d) # 使用 Debug 配置构建时会为文件添加后缀 d
 
 # make sure __cplusplus is defined when using msvc and enable parallel build
 if(MSVC)
@@ -162,7 +164,7 @@ else()
     add_library(${MODULE_TARGET_NAME} SHARED ${TARGET_HEADER_FILES}
                                              ${TARGET_SOURCE_FILES}) # 添加链接库输出
     # 为刚创建的动态库设置FOLDER属性，这个动态库被放置在项目中以 PROPERTY_PREFIX 命名的文件夹下
-    set_property(TARGET ${MODULE_TARGET_NAME} PROPERTY FOLDER 
+    set_property(TARGET ${MODULE_TARGET_NAME} PROPERTY FOLDER
                                                        ${PROPERTY_PREFIX})
 
     # ACIS
@@ -172,12 +174,13 @@ else()
     # 设置目标引用
     target_include_directories(
         ${MODULE_TARGET_NAME}
-        PUBLIC "$<BUILD_INTERFACE:${MODULE_COMMON_INCLUDE_DIRS}>"                                                       
+        PUBLIC "$<BUILD_INTERFACE:${MODULE_COMMON_INCLUDE_DIRS}>"
                "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>")
 
-# 在这里可以发现 target_include_directories 中的 ${MODULE_COMMON_INCLUDE_DIRS} 包含 add_library 时的 ${MODULE_INCLUDE_DIR}
-# 因为 add_library 命令只是定义了目标，target_include_directories设置目标的头文件包含目录。
-# 这样使用MODULE_COMMON_INCLUDE_DIRS集中管理头文件，便于维护迁移。
+    # 在这里可以发现 target_include_directories 中的 ${MODULE_COMMON_INCLUDE_DIRS} 包含
+    # add_library 时的 ${MODULE_INCLUDE_DIR} 因为 add_library
+    # 命令只是定义了目标，target_include_directories设置目标的头文件包含目录。
+    # 这样使用MODULE_COMMON_INCLUDE_DIRS集中管理头文件，便于维护迁移。
 
 endif()
 
@@ -208,12 +211,13 @@ endif()
 if(${MODULE_BUILD_FORMAT})
     find_package(Python REQUIRED)
 
-    #定义了名为 format 的自定义目标，并在${CMAKE_CURRENT_SOURCE_DIR}目录下运行format.py
+    # 定义了名为 format 的自定义目标，并在${CMAKE_CURRENT_SOURCE_DIR}目录下运行format.py
     add_custom_target(
         format
         COMMAND ${Python_EXECUTABLE} ${MODULE_SCRIPTS_DIR}/format.py
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-    set_property(TARGET format PROPERTY FOLDER "${PROPERTY_PREFIX}") # 放置在项目中以 PROPERTY_PREFIX 命名的文件夹下
+    set_property(TARGET format PROPERTY FOLDER "${PROPERTY_PREFIX}"
+    )# 放置在项目中以 PROPERTY_PREFIX 命名的文件夹下
 
     add_custom_target(
         format-check
