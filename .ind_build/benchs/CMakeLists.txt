@@ -29,18 +29,14 @@ add_executable(${TMP_TARGET_NAME} ${BENCH_HEADER_FILES} ${BENCH_SOURCE_FILES})
 set_property(TARGET ${TMP_TARGET_NAME} PROPERTY FOLDER "${PROPERTY_PREFIX}")
 
 # 设置目标引用
-target_include_directories(${PROJECT_NAME} PUBLIC ${MODULE_INCLUDE_DIRS})
-target_include_directories(${PROJECT_NAME}
+target_include_directories(${TMP_TARGET_NAME} PUBLIC ${MODULE_INCLUDE_DIRS})
+target_include_directories(${TMP_TARGET_NAME}
                            PUBLIC "${CMAKE_CURRENT_LIST_DIR}/include")
 
 # 设置目标链接
-target_link_libraries(${PROJECT_NAME} PUBLIC ${MODULE_TARGET_NAME})
+target_link_libraries(${TMP_TARGET_NAME} PUBLIC ${MODULE_TARGET_NAME})
 target_link_libraries(${TMP_TARGET_NAME} PUBLIC benchmark::benchmark
                                                 benchmark::benchmark_main)
 
 # 指定benchmark的输出形式
 add_definitions(-DBENCHMARK_OUTPUT="console") # console, csv/CSV, json/JSON
-
-# ACIS
-target_include_acis(${PROJECT_NAME})
-target_link_acis(${PROJECT_NAME} ${MODULE_DLL_OUTPUT_DIR})

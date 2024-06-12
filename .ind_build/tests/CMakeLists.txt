@@ -29,13 +29,9 @@ add_executable(${TMP_TARGET_NAME} ${TEST_HEADER_FILES} ${TEST_SOURCE_FILES})
 set_property(TARGET ${TMP_TARGET_NAME} PROPERTY FOLDER "${PROPERTY_PREFIX}")
 
 # 设置目标引用
-target_include_directories(${PROJECT_NAME}
+target_include_directories(${TMP_TARGET_NAME}
                            PUBLIC "${CMAKE_CURRENT_LIST_DIR}/include")
 
 # 设置目标链接
-target_link_libraries(${PROJECT_NAME} PUBLIC ${MODULE_TARGET_NAME})
-target_link_libraries(${PROJECT_NAME} PUBLIC gtest gtest_main)
-
-# ACIS
-target_include_acis(${PROJECT_NAME})
-target_link_acis(${PROJECT_NAME} ${MODULE_DLL_OUTPUT_DIR})
+target_link_libraries(${TMP_TARGET_NAME} PUBLIC ${MODULE_TARGET_NAME})
+target_link_libraries(${TMP_TARGET_NAME} PUBLIC gtest gtest_main)

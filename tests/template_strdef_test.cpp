@@ -5,20 +5,16 @@
  * @author  Shivelino
  * @date    2024.6.6
  * @version
- * @par Copyright(c): Concloud Software Corporation
- * @par todo:
- * @par history:
  *********************************************************************/
 // 测试用头文件
 #include <gtest/gtest.h>
 
-// ACIS
-#include <acis/cstrapi.hxx>
-#include <acis_utils/acis_utils.hpp>
-#include <acis_utils/same_entity.hpp>  // same_entity所在头文件
-
 // GME
-#include "template/template_strdef.hxx"
+#include "template/acis/strdef.hxx"
+
+// ACIS
+#include <acis_utils.hpp>
+#include <same_entity.hpp>  // same_entity所在头文件
 
 // ====================================================================
 

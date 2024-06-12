@@ -10,11 +10,11 @@
  * @par history:
  *********************************************************************/
 #pragma once
-#include <string>
 #include <fstream>
 #include <iostream>
 #include <random>
 #include <sstream>
+#include <string>
 #include <thread>
 
 #include "acis/cstrapi.hxx"
@@ -23,7 +23,7 @@
 #include "acis/point.hxx"
 #include "acis/surface.hxx"
 #include "acis/transfrm.hxx"
-#include "acis_utils/acis_utils.hpp"
+#include "acis_utils.hpp"
 
 // 用于输出错误发生的编译模式
 #ifdef _DEBUG
@@ -31,7 +31,6 @@ const std::string OPER_MODE = "DEBUG";
 #else
 const std::string OPER_MODE = "RELEASE";
 #endif
-
 
 /**
  * @brief 模板方法类，该方法用于判断经过ACIS和GME Debug函数所得结果是否一致
@@ -72,7 +71,7 @@ class EqualDebug {
      * @brief 用于判断参数写入文件后，文件内容是否相等
      * @return 文件内容相等情况
      */
-    inline bool is_equal(std::string test_name){
+    inline bool is_equal(std::string test_name) {
         std::string acis_file = "acis_debug" + test_name + ".txt";
         std::string gme_file = "gme_debug" + test_name + ".txt";
         // 通过acis将参数写入到文件中，再读取至字符串中
@@ -105,7 +104,7 @@ class EqualDebug {
      * @brief 用于判断参数写入字符串后，字符串内容是否相等
      * @return 字符串内容相等情况
      */
-    inline bool is_equal_str(){
+    inline bool is_equal_str() {
         char acis_str[DEFAULT_STR_SIZE] = {'\0'};
         char gme_str[DEFAULT_STR_SIZE] = {'\0'};
 
@@ -118,7 +117,7 @@ class EqualDebug {
 /**
  * @brief 打印实体的所有点坐标
  */
-inline void gme_print_all_vertex(ENTITY* entity, const char* front_string = ""){
+inline void gme_print_all_vertex(ENTITY* entity, const char* front_string = "") {
     if(entity == nullptr) {
         return;
     }
@@ -137,7 +136,7 @@ inline void gme_print_all_vertex(ENTITY* entity, const char* front_string = ""){
  * @brief 打印body的所有点信息
  * @param body 待打印的body
  */
-inline void printVertTopo(BODY* b){
+inline void printVertTopo(BODY* b) {
     ENTITY_LIST b_verts;
     api_get_vertices(b, b_verts);
     for(auto v: b_verts) {
@@ -153,7 +152,7 @@ inline void printVertTopo(BODY* b){
  * @brief 打印body的所有面信息
  * @param body 待打印的body
  */
-inline void printFaceTopo(BODY* b){
+inline void printFaceTopo(BODY* b) {
     ENTITY_LIST b_faces;
     api_get_faces(b, b_faces);
     int i = 0;
@@ -188,7 +187,7 @@ inline void printFaceTopo(BODY* b){
  * @brief 打印body的所有线信息
  * @param body 待打印的body
  */
-inline void printWireTopo(BODY* b){
+inline void printWireTopo(BODY* b) {
     ENTITY_LIST b_wires;
     api_get_wires(b, b_wires);
     int i = 0;
@@ -221,7 +220,7 @@ inline void printWireTopo(BODY* b){
 /**
  * @brief 获取当前线程ID
  */
-inline std::string get_pid_string(){
+inline std::string get_pid_string() {
     std::thread::id this_id = std::this_thread::get_id();
     std::stringstream ss;
     ss << this_id;
@@ -231,7 +230,7 @@ inline std::string get_pid_string(){
 /**
  * @brief 生成随机数字符串
  */
-inline std::string get_rand_string(){
+inline std::string get_rand_string() {
     // 生成随机整数
     std::random_device rd;                                     // 获取一个随机数生成器的种子
     std::mt19937 gen(rd());                                    // 使用 Mersenne Twister 引擎
@@ -239,4 +238,3 @@ inline std::string get_rand_string(){
     int randomInt = distribution(gen);
     return std::to_string(randomInt);
 }
-

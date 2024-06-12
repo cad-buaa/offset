@@ -46,7 +46,7 @@ def run(opt):
     if opt.clang_format:  # clang-format
         search_dirs = ["include", "src", "tests", "benchs", "samples", "application"]
         search_extensions = [".h", ".c", ".hpp", ".cpp", ".hxx", ".cxx"]
-        search_exclude_dirs = []
+        search_exclude_dirs = ["acis"]
         files = get_files_with_extensions(
             search_dirs, search_extensions, search_exclude_dirs)
         clang_format(files)

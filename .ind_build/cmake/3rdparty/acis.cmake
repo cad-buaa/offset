@@ -29,6 +29,9 @@ function(find_acis _version)
     set(ACIS_HEADERS_DIR
         "${DOWNLOAD_ACIS_DIR}/include"
         PARENT_SCOPE)
+    set(ACIS_UTILS_HEADER_DIR
+        "${DOWNLOAD_ACIS_DIR}/include/acis_utils"
+        PARENT_SCOPE)
 
     # library
     set(TEMP_LIB_DEB)
@@ -82,12 +85,15 @@ macro(target_link_acis _target_name _dest_dir)
     # 为目标链接库文件
     target_link_libraries(
         ${_target_name}
-        PUBLIC debug ${ACIS_LIB_DEB} # debug 和 optimized 关键字用于区分 debug 和 release
-                                     # 配置下使用的 ACIS 库文件。
-               optimized ${ACIS_LIB_REL})
+        PUBLIC debug
+               ${ACIS_LIB_DEB} # debug 和 optimized 关键字用于区分 debug 和 release
+               # 配置下使用的 ACIS 库文件。
+               optimized
+               ${ACIS_LIB_REL})
     set(_input_file
         "$<$<CONFIG:Debug>:${ACIS_DLL_DEB}>$<$<NOT:$<CONFIG:Debug>>:${ACIS_DLL_REL}>"
     )
+
     # 在指定目标 构建完成后 将DLL文件拷贝到目标输出目录
     add_custom_command(
         TARGET ${_target_name}

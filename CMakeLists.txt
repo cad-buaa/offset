@@ -103,7 +103,8 @@ set(MODULE_DOCS_DIR ${MODULE_INDBUILD_PREFIX}/docs)
 set(MODULE_BUILD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/build)
 set(MODULE_OUT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/out)
 set(MODULE_BUILD_DEPS_DIR ${MODULE_BUILD_DIR}/_deps) # FetchContent_Declare的工作路径
-set(MODULE_COMMON_INCLUDE_DIRS ${MODULE_INCLUDE_DIR} ${MODULE_DEPS_DIR})
+set(MODULE_COMMON_INCLUDE_DIRS ${MODULE_DEPS_DIR} ${MODULE_INCLUDE_DIR}
+                               "${MODULE_INCLUDE_DIR}/${MODULE_NAME_LOWER}")
 
 # 根据构建配置来设置输出directory 这里用到CMake生成器表达式
 set(MODULE_OUT_DIR_DIFF_BUILD_TYPE
@@ -119,6 +120,7 @@ set(MODULE_OUT_DIR_DIFF_BUILD_TYPE
     "$<$<CONFIG:MinSizeRel>:"
     "${MODULE_OUT_DIR}/MinSizeRel"
     ">")
+
 # 生成器表达式生成的字符串包含分号作为分隔符，删除得到路径字符串。
 string(REPLACE ";" "" MODULE_OUT_DIR_DIFF_BUILD_TYPE
                ${MODULE_OUT_DIR_DIFF_BUILD_TYPE})
@@ -136,7 +138,8 @@ option(MODULE_BUILD_BENCHS "Whether to build the module: benchmark" ON)
 option(MODULE_BUILD_FORMAT "Whether to build the format tool" ON)
 option(MODULE_BUILD_INSTALL "Generate the install target" OFF)
 option(MODULE_BUILD_SAMPLES "Whether to build the module: sample" OFF) # sample
-                                                                       # option
+
+# option
 option(MODULE_BUILD_DOXYGEN "Whether to build the module: DocGenerate" ON
 )# doxygen编译开关
 
@@ -154,8 +157,16 @@ find_acis(${MODULE_ACIS_VERSION})
 # ---------------------------------------------------------------------------------------
 include("${MODULE_CMAKE_DIR}/frame_utils.cmake")
 get_all_headers(${MODULE_INCLUDE_DIR} TARGET_HEADER_FILES)
+source_group(
+    TREE "${CMAKE_CURRENT_LIST_DIR}/include/${MODULE_NAME_LOWER}"
+    PREFIX "include"
+    FILES ${TARGET_HEADER_FILES})
 set(TARGET_HEADER_FILES ${TARGET_HEADER_FILES} ${MODULE_HEADERS})
 get_all_sources(${MODULE_SOURCE_DIR} TARGET_SOURCE_FILES)
+source_group(
+    TREE "${CMAKE_CURRENT_LIST_DIR}/src"
+    PREFIX "src"
+    FILES ${TARGET_SOURCE_FILES})
 
 if("${TARGET_SOURCE_FILES}" STREQUAL "")
     message(WARNING "This folder has no sources!!!")
@@ -163,12 +174,16 @@ else()
     # 在当前目录下创建了一个名为 MODULE_TARGET_NAME 的动态库目标，使用之前获取的头文件与源文件
     add_library(${MODULE_TARGET_NAME} SHARED ${TARGET_HEADER_FILES}
                                              ${TARGET_SOURCE_FILES}) # 添加链接库输出
+
     # 为刚创建的动态库设置FOLDER属性，这个动态库被放置在项目中以 PROPERTY_PREFIX 命名的文件夹下
     set_property(TARGET ${MODULE_TARGET_NAME} PROPERTY FOLDER
                                                        ${PROPERTY_PREFIX})
 
-    # ACIS
-    target_include_acis(${MODULE_TARGET_NAME})
+    # ACIS target_include_acis(${MODULE_TARGET_NAME})
+    target_include_directories(
+        ${MODULE_TARGET_NAME}
+        PUBLIC "$<BUILD_INTERFACE:${ACIS_UTILS_HEADER_DIR}>"
+               "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>")
     target_link_acis(${MODULE_TARGET_NAME} ${MODULE_DLL_OUTPUT_DIR})
 
     # 设置目标引用
@@ -181,7 +196,6 @@ else()
     # add_library 时的 ${MODULE_INCLUDE_DIR} 因为 add_library
     # 命令只是定义了目标，target_include_directories设置目标的头文件包含目录。
     # 这样使用MODULE_COMMON_INCLUDE_DIRS集中管理头文件，便于维护迁移。
-
 endif()
 
 # ---------------------------------------------------------------------------------------
