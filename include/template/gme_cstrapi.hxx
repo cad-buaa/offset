@@ -20,6 +20,5 @@
  * @param[in]	z z 方向的尺寸
  * @param[out]	body 用于返回生成的body
  * @return		函数执行结果
- * @related     BODY
  */
 DECL_CSTR outcome gme_api_sweep_make_cuboid(double x, double y, double z, BODY*& body);
