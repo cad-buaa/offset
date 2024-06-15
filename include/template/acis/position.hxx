@@ -187,7 +187,12 @@ DECL_BASE SPAposition interpolate(double param, SPAposition const& p1, SPApositi
  * @param res
  * optional positional tolerance.
  */
+
+#    ifdef ACIS_VERSION_R34
 DECL_BASE bool same_point(SPAposition const& p1, SPAposition const& p2, const double res = SPAresabs);
+#    elif defined(ACIS_VERSION_R32)
+DECL_BASE logical same_point(SPAposition const& p1, SPAposition const& p2, const double res = SPAresabs);
+#    endif
 
 /** @} */
 /**
@@ -504,7 +509,11 @@ class DECL_BASE SPAposition {
     /**
      * @nodoc
      */
+#    ifdef ACIS_VERSION_R34
     friend DECL_BASE bool same_point(SPAposition const& p1, SPAposition const& p2, const double res);
+#    elif defined ACIS_VERSION_R32
+    friend DECL_BASE logical same_point(SPAposition const& p1, SPAposition const& p2, const double res);
+#    endif
 
     // Output details of a SPAposition.
     /**
@@ -533,6 +542,7 @@ class DECL_BASE SPAposition {
 /**
  * @nodoc
  */
+#    ifdef ACIS_VERSION_R34
 inline bool same_point(SPAposition const& p1, SPAposition const& p2, const double res) {
     double res2 = res * res;
     double Len_SQ = 0.0;
@@ -543,6 +553,19 @@ inline bool same_point(SPAposition const& p1, SPAposition const& p2, const doubl
     }
     return Len_SQ < res2;
 };
+
+#    elif defined ACIS_VERSION_R32
+inline logical same_point(SPAposition const& p1, SPAposition const& p2, const double res) {
+    double res2 = res * res;
+    double Len_SQ = 0.0;
+    for(int i = 0; i < 3; i++) {
+        double dv = (p1.coord[i] - p2.coord[i]) * (p1.coord[i] - p2.coord[i]);
+        if(dv > res2) return FALSE;
+        Len_SQ += dv;
+    }
+    return Len_SQ < res2;
+};
+#    endif
 
 // STI let (7/96): global inline operators
 // Determine if 2 positions are within SPAresabs of each other

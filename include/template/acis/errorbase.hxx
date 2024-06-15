@@ -423,6 +423,7 @@ class DECL_BASE exception_save : public ACIS_OBJECT {
 /**
  * @nodoc
  */
+#    ifdef ACIS_VERSION_R34  // R34 impl by dll, R32 impl by inline
 class DECL_BASE acis_exception {
   public:
     err_mess_type mess;
@@ -440,6 +441,57 @@ class DECL_BASE acis_exception {
 
     acis_exception& operator=(const acis_exception& o);
 };
+#    elif defined(ACIS_VERSION_R32)
+/**
+ * @nodoc
+ */
+class acis_exception /* : public ACIS_OBJECT no memory managment for this class */ {
+  public:
+    err_mess_type mess;
+    error_info_base* info;
+    const char* file;
+    int line;
+
+    acis_exception(err_mess_type m, error_info_base* i = NULL, const char* f = NULL, int l = 0): mess(m), info(i), file(f), line(l) {
+        if(NULL != i) i->add();
+    }
+
+    acis_exception(const acis_exception& old): mess(old.mess), info(old.info), file(old.file), line(old.line) {
+        if(info) info->add();
+    }
+
+    ~acis_exception() {
+        if(info) info->remove();
+    }
+
+    error_info_base* set_info(error_info_base* i, const char* f = NULL, int l = 0) {
+        SPAUNUSED(f)
+        SPAUNUSED(l)
+        if(i != info) {
+            if(info) info->remove();
+            info = i;
+            if(info) info->add();
+        }
+
+#        ifdef SPA_DEBUG
+        if(f) {
+            file = f;
+            line = l;
+        }
+#        endif
+
+        return info;
+    }
+
+    acis_exception& operator=(const acis_exception& o) {
+        mess = o.mess;
+        set_info(o.info);
+        file = o.file;
+        line = o.line;
+        return *this;
+    }
+};
+#    endif
 
 /**
  * Exception block begin.

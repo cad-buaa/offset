@@ -71,6 +71,10 @@ set(CMAKE_DEBUG_POSTFIX d) # 使用 Debug 配置构建时会为文件添加后�
 # make sure __cplusplus is defined when using msvc and enable parallel build
 if(MSVC)
     string(APPEND CMAKE_CXX_FLAGS " /Zc:__cplusplus /MP")
+    # set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded")  # /MT
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")  # /MD
+    # set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDebug")  # /MTd
+    # set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDebugDLL")  # /MDd
 endif()
 
 # 编译器选项
