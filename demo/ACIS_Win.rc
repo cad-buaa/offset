@@ -1,0 +1,324 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#ifndef APSTUDIO_INVOKED
+#include "targetver.h"
+#endif
+#define APSTUDIO_HIDDEN_SYMBOLS
+#include "windows.h"
+#undef APSTUDIO_HIDDEN_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (United States) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDI_ACIS_WIN            ICON                    "ACIS_Win.ico"
+IDI_SMALL               ICON                    "small.ico"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+IDC_ACIS_WIN MENU
+BEGIN
+    POPUP "&File"
+    BEGIN
+        MENUITEM "E&xit",                       IDM_EXIT
+    END
+    POPUP "S&ystem"
+    BEGIN
+        MENUITEM "MT_&Slice",                   ID_MULTI_SLICE
+        MENUITEM "Process MT API",              ID_PROCESS_MT_API
+        MENUITEM "MT Work Packet Queue",        ID_MT_WORK_PACKET_QUEUE
+    END
+    POPUP "&Blending"
+    BEGIN
+        MENUITEM "Constant Radius",             ID_WIGGLE_CONSTRADIUS
+        POPUP "Variable Radius"
+        BEGIN
+            MENUITEM "Wiggle",                      ID_WIGGLE_VARIABLERADIUS
+            MENUITEM "Holdline",                    ID_BLENDING_HOLDLINE
+            MENUITEM "Elliptical",                  ID_BLENDING_ELLIPTICAL
+            MENUITEM "Blend Radius &Transition",    ID_BLEND_BLEND_RADIUS_TRANSITION
+            MENUITEM "Grip",                        ID_BLENDING_GRIP
+        END
+        POPUP "Chamfer"
+        BEGIN
+            MENUITEM "Pencil",                      ID_BLENDING_PENCIL
+            MENUITEM "Spline Chamfer",              ID_BLENDING_SPLINECHAMFER
+            MENUITEM "Twisted Bar",                 ID_BLENDING_TWISTEDBAR
+        END
+        POPUP "Entity-Entity"
+        BEGIN
+            MENUITEM "Wine Glass",                  ID_BLENDING_WINEGLASS
+            MENUITEM "Number Nine",                 ID_BLENDING_NUMBERNINE
+        END
+        MENUITEM "Annotations",                 ID_BLENDING_ANNOTATIONS
+        POPUP "Vertex Blends"
+        BEGIN
+            MENUITEM "Dice",                        ID_BLENDING_DICE
+            MENUITEM "British Dice",                ID_BLENDING_BRITISHDICE
+        END
+        POPUP "End Processing"
+        BEGIN
+            MENUITEM "Blend Mitre and Cap",         ID_BLENDING_BLENDMITREANDCAP
+            MENUITEM "Clown Hat",                   ID_BLENDING_CLOWNHAT
+        END
+    END
+    POPUP "Model &Editing"
+    BEGIN
+        POPUP "&LOPS"
+        BEGIN
+            POPUP "Taper"
+            BEGIN
+                POPUP "Edge Taper"
+                BEGIN
+                    MENUITEM "Example 1",                   ID_LOP_TAPER_FACES1
+                    MENUITEM "Example 2",                   ID_LOP_TAPER_FACES2
+                END
+                MENUITEM "Plane Taper",                 ID_LOP_TAPER_FACES3
+            END
+            POPUP "Move"
+            BEGIN
+                MENUITEM "Translate",                   ID_MOVE_MOVEFACES
+                MENUITEM "Rotate",                      ID_MOVE_ROTATEFACES
+            END
+            POPUP "Offset"
+            BEGIN
+                MENUITEM "Offset - Faces",              ID_OFFSET_OFFSETFACES
+                MENUITEM "Offset - Body",               ID_OFFSET_OFFSETBODY1
+            END
+        END
+    END
+    POPUP "&Modeling Operations"
+    BEGIN
+        POPUP "&Boolean"
+        BEGIN
+            POPUP "&Basic"
+            BEGIN
+                MENUITEM "&Unite",                      ID_BOOLEAN_UNITE
+                MENUITEM "&Intersection",               ID_BOOLEAN_INTERSECTION
+                MENUITEM "&Subtraction",                ID_BOOLEAN_SUBTRACTION
+                MENUITEM "&Chop",                       ID_BOOLEAN_CHOP
+            END
+            POPUP "&Project"
+            BEGIN
+                MENUITEM "Project &Wire to Body",       ID_BOOLEAN_PROJECTWIRETOBODY
+                MENUITEM "Project &Edge to Face",       ID_BOOLEAN_PROJECTEDGETOFACE
+            END
+            POPUP "&Subdivide"
+            BEGIN
+                MENUITEM "&Face Subdivide",             ID_BOOLEAN_FACESUBDIVIDE
+                MENUITEM "&Split Wire Edge",            ID_BOOLEAN_SPLITWIREEDGE
+            END
+            POPUP "&High Level"
+            BEGIN
+                MENUITEM "&Make Shadow",                ID_BOOLEAN_MAKESHADOW
+            END
+        END
+        POPUP "S&titch"
+        BEGIN
+            MENUITEM "&MT STitch",                  ID_STITCH_MTSTITCH
+        END
+	POPUP "&Incremental Operations"
+	BEGIN
+	    MENUITEM "Incremental Booleans"		ID_HLC_INCR_BOOL
+	END
+        POPUP "&Constructors"
+        BEGIN
+            MENUITEM "&Text_From_Wire_Hello",       ID_CONSTRUCTORS_TEXT_HELLO
+        END
+    END
+    POPUP "&Surfacing"
+    BEGIN
+        POPUP "&Sweep"
+        BEGIN
+            MENUITEM "Sweep A&bstract Art",         ID_SWEEP_SWEEPABSTRACTART
+            MENUITEM "Sweep Angled Polygon",        ID_SWEEP_SWEEPANGLEDPOLYGON
+            MENUITEM "Sweep &Apple Peal",           ID_SWEEP_SWEEP_APPLEPEAL
+            MENUITEM "Sweep Arch",                  ID_SWEEP_SWEEPARCH
+            MENUITEM "Sweep Deformed &Tubing",      ID_SWEEP_SWEEP_DEFORMEDTUBING
+            MENUITEM "Sweep De&gen Draft Box",      ID_SWEEP_SWEEP_DEGENDRAFTBOX
+            MENUITEM "Sweep Drafted Box1",          ID_SWEEP_SWEEPDRAFTEDBOX1
+            MENUITEM "Sweep Drafted Box2",          ID_SWEEP_SWEEPDRAFTEDBOX2
+            MENUITEM "Sweep Drafted Box &Cyl",      ID_SWEEP_SWEEP_DRAFTEDBOXCYL
+            MENUITEM "Sweep Drafted Bo&x with Hole", ID_SWEEP_SWEEP_DRAFTEDBOXWITHHOLE
+            MENUITEM "Sweep Drafted &Cone1",        ID_SWEEP_SWEEP_DRAFTEDCONE1
+            MENUITEM "Sweep Drafted Cone2",         ID_SWEEP_SWEEPDRAFTEDCONE2
+            MENUITEM "Sweep Drafted Polygon1",      ID_SWEEP_SWEEP_DRAFTEDPOLYGON1
+            MENUITEM "Sweep Drafted Polygon2",      ID_SWEEP_SWEEPDRAFTEDPOLYGON2
+            MENUITEM "Sweep Drafted Tube",          ID_SWEEP_SWEEPDRAFTEDTUBE
+            MENUITEM "Sweep &Fin",                  ID_SWEEP_SWEEPFIN
+            MENUITEM "Sweep &Heart",                ID_SWEEP_SWEEP_HEART
+            MENUITEM "Sweep Pipe Thru E &Block",    ID_SWEEP_SWEEP_PIPE_THRU
+            MENUITEM "Sweep &Pipe Thru Slotted Block", ID_SWEEP_SWEEP_PIPETHRUSLOTTEDBLOCK
+            MENUITEM "Sweep Rigid P&ipe",           ID_SWEEP_SWEEPRIGIDPIPE
+            MENUITEM "Sweep Ri&gid Pipe Shaft",     ID_SWEEP_SWEEPRIGIDPIPESHAFT
+            MENUITEM "Sweep Rigid T&ube1",          ID_SWEEP_SWEEP_RIGIDTUBE1
+            MENUITEM "Sweep Rigid Tube&2",          ID_SWEEP_SWEEP_RIGIDTUBE2
+            MENUITEM "Sweep Sha&ft",                ID_SWEEP_SWEEPSHAFT
+            MENUITEM "Sweep Torus Thru &E Block",   ID_SWEEP_SWEEP_TORUSTHRUEBLOCK
+            MENUITEM "Sweep T&wisted Tube",         ID_SWEEP_SWEEPTWISTEDTUBE
+            MENUITEM "Sweep UF&O1",                 ID_SWEEP_SWEEP_UFO1
+            MENUITEM "Sweep UFO2",                  ID_SWEEP_SWEEPUFO2
+            MENUITEM "Sweep &Wedge",                ID_SWEEP_SWEEP_WEDGE
+        END
+        POPUP "S&kin"
+        BEGIN
+            MENUITEM "Skin &Yo Yo",                 ID_SKIN_SKIN_YO_YO
+            MENUITEM "Star Seed1",                  ID_SKIN_STARSEED1
+            MENUITEM "Star Seed 2",                 ID_SKIN_STARSEED2
+            MENUITEM "Start Drum",                  ID_SKIN_STARTDRUM
+            MENUITEM "Seed Pod",                    ID_SKIN_SEEDPOD
+            MENUITEM "Top",                         ID_SKIN_TOP
+            MENUITEM "Bottle",                      ID_SKIN_BOTTLE
+            MENUITEM "Vase",                        ID_SKIN_VASE
+            MENUITEM "Worm",                        ID_SKIN_WORM
+            MENUITEM "Nose Star",                   ID_SKIN_NOSESTAR
+            MENUITEM "Curved Star Body",            ID_SKIN_CURVEDSTARBO
+            MENUITEM "Bad Stirrup",                 ID_SKIN_BADSTIRRUP
+            MENUITEM "Good Stirrup",                ID_SKIN_GOODSTIRRUP
+            MENUITEM "Lense Body",                  ID_SKIN_LENSEBODY
+            MENUITEM "Balloon",                     ID_SKIN_BALLOON
+            MENUITEM "Twisted Star Seed",           ID_SKIN_TWISTEDSTARSEED
+            MENUITEM "Baloon on Cylindrical Face 1", ID_SKIN_BALOONONCYLINDRICALFACE1
+            MENUITEM "Baloon on Cylindrical Face 2", ID_SKIN_BALOONONCYLINDRICALFACE2
+            MENUITEM "Robot Tooth",                 ID_SKIN_ROBOTTOOTH
+            MENUITEM "Bad Square egg",              ID_SKIN_BADSQUAREEGG
+            MENUITEM "Good Square Egg",             ID_SKIN_GOODSQUAREEGG
+            MENUITEM "Dented Doughnut",             ID_SKIN_DENTEDDOUGHNUT
+            MENUITEM "Flower",                      ID_SKIN_FLOWER
+        END
+    END
+    POPUP "&Help"
+    BEGIN
+        MENUITEM "&About ...",                  IDM_ABOUT
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Accelerator
+//
+
+IDC_ACIS_WIN ACCELERATORS
+BEGIN
+    "?",            IDM_ABOUT,              ASCII,  ALT
+    "/",            IDM_ABOUT,              ASCII,  ALT
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_ABOUTBOX DIALOGEX 0, 0, 170, 62
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "About ACIS_Win"
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
+BEGIN
+    ICON            128,IDC_STATIC,14,14,21,20
+    LTEXT           "ACIS_Win, Version 1.0",IDC_STATIC,42,14,114,8,SS_NOPREFIX
+    LTEXT           "Copyright (C) 2015",IDC_STATIC,42,26,114,8
+    DEFPUSHBUTTON   "OK",IDOK,113,41,50,14,WS_GROUP
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO
+BEGIN
+    IDD_ABOUTBOX, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 163
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 55
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#ifndef APSTUDIO_INVOKED\r\n"
+    "#include ""targetver.h""\r\n"
+    "#endif\r\n"
+    "#define APSTUDIO_HIDDEN_SYMBOLS\r\n"
+    "#include ""windows.h""\r\n"
+    "#undef APSTUDIO_HIDDEN_SYMBOLS\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE
+BEGIN
+    IDS_APP_TITLE           "ACIS_Win"
+    IDC_ACIS_WIN            "ACIS_WIN"
+END
+
+#endif    // English (United States) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

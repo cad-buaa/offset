@@ -141,7 +141,8 @@ option(MODULE_BUILD_TESTS "Whether to build the module: test" ON)
 option(MODULE_BUILD_BENCHS "Whether to build the module: benchmark" ON)
 option(MODULE_BUILD_FORMAT "Whether to build the format tool" ON)
 option(MODULE_BUILD_INSTALL "Generate the install target" OFF)
-option(MODULE_BUILD_SAMPLES "Whether to build the module: sample" OFF) # sample
+option(MODULE_BUILD_SAMPLES "Whether to build the sample" OFF) # sample
+option(MODULE_BUILD_DEMO "Whether to build the demo" ON) # demo
 
 # option
 option(MODULE_BUILD_DOXYGEN "Whether to build the module: DocGenerate" ON
@@ -216,6 +217,10 @@ endif()
 
 if(${MODULE_BUILD_BENCHS})
     add_subdirectory("${MODULE_INDBUILD_PREFIX}/benchs")
+endif()
+
+if(${MODULE_BUILD_DEMO})
+    add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/demo")
 endif()
 
 # ---------------------------------------------------------------------------------------
