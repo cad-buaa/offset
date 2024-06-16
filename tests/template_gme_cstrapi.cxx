@@ -1,5 +1,5 @@
 /*********************************************************************
- * @file    template_gme_cstrapi.cpp
+ * @file    template_gme_cstrapi.cxx
  * @brief
  * @details 属于 api extend 示例
  * @author  CastaneaG
@@ -12,9 +12,9 @@
 #include "template/template_gme_cstrapi.hxx"
 
 // ACIS
-#include <acis/cstrapi.hxx>
-#include <acis_utils.hpp>
-#include <same_entity.hpp>
+#include "acis/cstrapi.hxx"
+#include "acis_utils.hpp"
+#include "same_entity.hpp"
 
 // ====================================================================
 

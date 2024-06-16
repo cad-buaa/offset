@@ -8,11 +8,11 @@
 #pragma once
 
 // 声明接口所属模块
-#include <acis/dcl_kern.h>  // DECL_KERN宏位于此文件夹
+#include "acis/dcl_kern.h"  // DECL_KERN宏位于此文件夹
 
 // 声明所需头文件
-#include <acis/api.hxx>
-#include <acis/body.hxx>
+#include "acis/api.hxx"
+#include "acis/body.hxx"
 
 /**
  * @brief   构造cuboid.

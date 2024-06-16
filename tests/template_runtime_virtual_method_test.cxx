@@ -1,5 +1,5 @@
 /*********************************************************************
- * @file    template_runtime_virtual_method_test.cpp
+ * @file    template_runtime_virtual_method_test.cxx
  * @brief
  * @details 属于 runtime virtual method 示例
  * @author  CastaneaG
@@ -14,9 +14,9 @@
 #include "template/template_edge_count_args.hxx"
 
 // ACIS
-#include <acis/cstrapi.hxx>
-#include <acis/get_top.hxx>
-#include <acis_utils.hpp>
+#include "acis/cstrapi.hxx"
+#include "acis/get_top.hxx"
+#include "acis_utils.hpp"
 
 // ====================================================================
 

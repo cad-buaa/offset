@@ -1,5 +1,5 @@
 ﻿/*********************************************************************
- * @file    template_strdef_test.cpp
+ * @file    template_strdef_test.cxx
  * @brief
  * @details
  * @author  Shivelino
@@ -13,8 +13,8 @@
 #include "template/acis/strdef.hxx"
 
 // ACIS
-#include <acis_utils.hpp>
-#include <same_entity.hpp>  // same_entity所在头文件
+#include "acis_utils.hpp"
+#include "same_entity.hpp"  // same_entity所在头文件
 
 // ====================================================================
 

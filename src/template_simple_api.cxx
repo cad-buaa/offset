@@ -1,5 +1,5 @@
 ﻿/*********************************************************************
- * @file    template_simple_api.cpp
+ * @file    template_simple_api.cxx
  * @brief
  * @details
  * @author  Shivelino
@@ -12,17 +12,15 @@
 #include "template/template_simple_api.hxx"
 
 // ACIS
-#include <acis/dcl_kern.h>
-#include <acis/logical.h>
-
-#include <acis/acis.hxx>
-#include <acis/api.err>
-#include <acis/api.hxx>
-#include <acis/body.hxx>
-#include <acis/check.hxx>
-#include <acis/cstrapi.hxx>
-#include <acis/module.hxx>
-#include <acis/primtive.hxx>
+#include "acis/logical.h"
+#include "acis/acis.hxx"
+#include "acis/api.err"
+#include "acis/api.hxx"
+#include "acis/body.hxx"
+#include "acis/check.hxx"
+#include "acis/cstrapi.hxx"
+#include "acis/module.hxx"
+#include "acis/primtive.hxx"
 
 // ************************************************************
 outcome gme_api_make_cuboid(double width, double depth, double height, BODY*& body) {

@@ -1,5 +1,5 @@
 ﻿/*********************************************************************
- * @file    template_simple_api_test.cpp
+ * @file    template_simple_api_test.cxx
  * @brief
  * @details
  * @author  Shivelino
@@ -12,10 +12,10 @@
 #include "template/template_simple_api.hxx"
 
 // ACIS
-#include <access.hpp>
-#include <acis/cstrapi.hxx>
-#include <acis_utils.hpp>
-#include <same_entity.hpp>  // same_entity所在头文件
+#include "access.hpp"
+#include "acis/cstrapi.hxx"
+#include "acis_utils.hpp"
+#include "same_entity.hpp"  // same_entity所在头文件
 
 // ====================================================================
 

@@ -7,10 +7,10 @@
  *********************************************************************/
 #pragma once
 
-#include <acis/dcl_cstr.h>
+#include "acis/dcl_cstr.h"
 
-#include <acis/acis.hxx>
-#include <acis/api.hxx>
+#include "acis/acis.hxx"
+#include "acis/api.hxx"
 
 /**
  * @brief     	使用 sweep 操作构建 cuboid

@@ -9,16 +9,16 @@
 
 #include <stdio.h>
 
-#include <acis/alltop.hxx>
-#include <acis/api.err>
-#include <acis/api.hxx>
-#include <acis/check.hxx>
-#include <acis/ckoutcom.hxx>
-#include <acis/cstrapi.hxx>
-#include <acis/get_top.hxx>
-#include <acis/lists.hxx>
-#include <acis/module.hxx>
-#include <acis/sweepapi.hxx>
+#include "acis/alltop.hxx"
+#include "acis/api.err"
+#include "acis/api.hxx"
+#include "acis/check.hxx"
+#include "acis/ckoutcom.hxx"
+#include "acis/cstrapi.hxx"
+#include "acis/get_top.hxx"
+#include "acis/lists.hxx"
+#include "acis/module.hxx"
+#include "acis/sweepapi.hxx"
 
 outcome gme_api_sweep_make_cuboid(double width, double depth, double height, BODY*& body) {
     DEBUG_LEVEL(DEBUG_CALLS)

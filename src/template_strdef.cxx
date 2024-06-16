@@ -1,5 +1,5 @@
 ﻿/*********************************************************************
- * @file    template_strdef.cpp
+ * @file    template_strdef.cxx
  * @brief
  * @details
  * @author  Shivelino
