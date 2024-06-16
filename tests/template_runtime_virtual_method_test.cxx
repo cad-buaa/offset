@@ -11,7 +11,7 @@
 #include <gtest/gtest.h>
 
 // GME
-#include "template/template_edge_count_args.hxx"
+#include "template_edge_count_args.hxx"
 
 // ACIS
 #include "acis/cstrapi.hxx"

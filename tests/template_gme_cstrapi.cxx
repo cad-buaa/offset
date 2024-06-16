@@ -9,7 +9,7 @@
 #include <gtest/gtest.h>
 
 // GME
-#include "template/template_gme_cstrapi.hxx"
+#include "template_gme_cstrapi.hxx"
 
 // ACIS
 #include "acis/cstrapi.hxx"

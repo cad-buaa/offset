@@ -18,7 +18,7 @@
 #include "acis/lists.hxx"
 
 // 自定义头文件
-#include "template/template_edge_count_args.hxx"
+#include "template_edge_count_args.hxx"
 
 /**
  * @brief			edge_count

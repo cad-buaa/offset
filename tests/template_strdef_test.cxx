@@ -10,7 +10,7 @@
 #include <gtest/gtest.h>
 
 // GME
-#include "template/acis/strdef.hxx"
+#include "acis/strdef.hxx"
 
 // ACIS
 #include "acis_utils.hpp"

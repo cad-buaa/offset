@@ -9,7 +9,7 @@
 #include <stdio.h>
 
 // 自定义头文件
-#include "template/template_simple_api.hxx"
+#include "template_simple_api.hxx"
 
 // ACIS
 #include "acis/logical.h"

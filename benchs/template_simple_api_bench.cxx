@@ -8,7 +8,7 @@
 #include <benchmark/benchmark.h>
 
 // GME
-#include "template/template_simple_api.hxx"
+#include "template_simple_api.hxx"
 
 // ACIS
 #include "acis/cstrapi.hxx"

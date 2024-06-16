@@ -9,7 +9,7 @@
 #include <gtest/gtest.h>
 
 // GME
-#include "template/template_simple_api.hxx"
+#include "template_simple_api.hxx"
 
 // ACIS
 #include "access.hpp"

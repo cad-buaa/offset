@@ -5,7 +5,7 @@
  * @author  CastaneaG
  * @date    2024.5.21
  *********************************************************************/
-#include "template/template_gme_cstrapi.hxx"
+#include "template_gme_cstrapi.hxx"
 
 #include <stdio.h>
 
