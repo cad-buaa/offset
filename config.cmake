@@ -1,7 +1,7 @@
 ﻿# ---------------------------------------------------------------------------------------
 # Module Config
 # ---------------------------------------------------------------------------------------
-set(MODULE_NAME "template")
+set(MODULE_NAME "offsetting")
 set(MODULE_VERSION_MAJOR 0)
 set(MODULE_VERSION_MINOR 0)
 set(MODULE_VERSION_PATCH 1)
@@ -40,5 +40,5 @@ set(MODULE_BENCH_CUSTOM_FILES)
 # ---------------------------------------------------------------------------------------
 # Samples Config
 # ---------------------------------------------------------------------------------------
-set(MODULE_SAMPLES_MODULES "template")
+set(MODULE_SAMPLES_MODULES "offsetting")
 option(MODULE_SAMPLES_WITH_DEP_MODULES "build samples of dep modules." OFF)
