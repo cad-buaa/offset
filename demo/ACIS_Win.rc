@@ -1,4 +1,4 @@
-// Microsoft Visual C++ generated resource script.
+﻿// Microsoft Visual C++ generated resource script.
 //
 #include "resource.h"
 
@@ -44,6 +44,10 @@ BEGIN
     POPUP "&File"
     BEGIN
         MENUITEM "E&xit",                       IDM_EXIT
+    END
+    POPUP "&Template"
+    BEGIN
+        MENUITEM "Cuboid Demo",                 ID_CUBOID_DEMO
     END
     POPUP "S&ystem"
     BEGIN
