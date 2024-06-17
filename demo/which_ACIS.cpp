@@ -20,6 +20,7 @@
 #include "stdafx.h"
 #include "stitch_examples.hxx"
 #include "sweep_examples.hxx"
+#include "template_examples.hxx"
 
 // This function converts a Windows menu resource ID into an aei function pointer.
 ACIS_fp find_which_ACIS(WORD id) {
@@ -210,6 +211,9 @@ ACIS_fp find_which_ACIS(WORD id) {
             return aei_LOP_OFFSET_FACES;
         case ID_OFFSET_OFFSETBODY1:
             return aei_LOP_OFFSET_BODY_NEGOFST;
+
+        case ID_CUBOID_DEMO:
+            return aei_CUBOID_DEMO;
 
         default:
             return nullptr;

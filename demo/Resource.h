@@ -1,4 +1,4 @@
-/*******************************************************************/
+﻿/*******************************************************************/
 /*    Copyright (c) 2016-2020 by Spatial Corp.                     */
 /*    All rights reserved.                                         */
 /*    Protected by U.S. Patents 5,257,205; 5,351,196; 6,369,815;   */
@@ -185,6 +185,7 @@
 #define ID_HLC_INCR_BOOL				32942
 #define ID_PROCESS_MT_API				32943
 #define ID_MT_WORK_PACKET_QUEUE			32944
+#define ID_CUBOID_DEMO			        32950
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
