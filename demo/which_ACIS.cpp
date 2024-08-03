@@ -1,4 +1,4 @@
-// $Id: blend_smoke_test.hxx,v 1.4 2002/01/28 16:53:03 rocon Exp $
+﻿// $Id: blend_smoke_test.hxx,v 1.4 2002/01/28 16:53:03 rocon Exp $
 /*******************************************************************/
 /*    Copyright (c) 1989-2020 by Spatial Corp.                     */
 /*    All rights reserved.                                         */
@@ -15,6 +15,7 @@
 #include "incr_examples.hxx"
 #include "lop_examples1.hxx"
 #include "mt_examples.hxx"
+#include "ofst_examples1.hxx"
 #include "resource.h"
 #include "skin_examples.hxx"
 #include "stdafx.h"
@@ -214,6 +215,12 @@ ACIS_fp find_which_ACIS(WORD id) {
 
         case ID_CUBOID_DEMO:
             return aei_CUBOID_DEMO;
+
+        // OFST
+        case ID_OFST_FACE1:
+            return aei_OFFSET_FACE_1;
+        case ID_OFST_FACE2:
+            return aei_OFFSET_FACE_2;
 
         default:
             return nullptr;

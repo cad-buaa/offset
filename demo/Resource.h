@@ -186,6 +186,18 @@
 #define ID_PROCESS_MT_API				32943
 #define ID_MT_WORK_PACKET_QUEUE			32944
 #define ID_CUBOID_DEMO			        32950
+#define ID_OFST_FACE1					32951
+#define ID_OFST_FACE2					32952
+#define ID_OFST_FACE3					32953
+#define ID_OFST_FACE4					32954
+#define ID_OFST_FACE5					32955
+#define ID_OFST_FACE6					32956
+#define ID_OFST_WIRE1					32957
+#define ID_OFST_WIRE2					32958
+#define ID_OFST_WIRE3					32959
+#define ID_OFST_WIRE4					32960
+#define ID_OFST_WIRE5					32961
+#define ID_OFST_WIRE6					32962
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
