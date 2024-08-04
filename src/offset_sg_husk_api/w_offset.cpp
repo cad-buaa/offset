@@ -4,6 +4,8 @@
 #include "acis/module.hxx"
 #include "acis/off_wire.hxx"
 #include "acis/unitvec.hxx"
+#include "PublicInterfaces/gme_sgcofrtn.hxx"
+
 
 outcome gme_api_offset_planar_wire(WIRE* given_wire, TRANSFORM const* trans, double offset_distance, const SPAunit_vector& wire_normal, BODY*& offset_wire, AcisOptions* ao) {
     DEBUG_LEVEL(DEBUG_CALLS) {
@@ -18,7 +20,7 @@ outcome gme_api_offset_planar_wire(WIRE* given_wire, TRANSFORM const* trans, dou
     if(ao && ao->journal_on()) {
         // J_api_offset_planar_wire(given_wire, trans, offset_distance, wire_normal, ao);
     }
-    //offset_wire = sg_offset_planar_wire(given_wire, trans, offset_distance, wire_normal, arc, 0, 1, 0, 0);
+    offset_wire = sg_offset_planar_wire(given_wire, (TRANSFORM*)trans, offset_distance, (SPAunit_vector&)wire_normal, arc, 0, 1, 0, 0);
     if(offset_wire) {
         result = outcome(0, (error_info*)0);
     } else {
@@ -30,3 +32,4 @@ outcome gme_api_offset_planar_wire(WIRE* given_wire, TRANSFORM const* trans, dou
     }
     return result;
 }
+

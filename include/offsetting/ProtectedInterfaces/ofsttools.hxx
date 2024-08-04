@@ -3,6 +3,9 @@
 #include "acis/thmgr.hxx"
 #include "acis/generic_graph.hxx"
 #include "acis/model_state.hxx"
+#include "acis/off_wire.hxx"
+#include "PrivateInterfaces/ofst_edge_smooth_manager.hxx"
+
 
 int check_failed_full_surface(FACE* face_copy, surface* offset_geom, SPAbox& face_box, SPApar_box& face_pb);
 bool check_if_face_is_full_surface(FACE* original_face, SURFACE* original_SUR, surface* offset_geom);
@@ -34,3 +37,12 @@ class parallel_get_tolerance : public thread_work_base
     virtual void process(void* arg);
     iop_modeler_state_sentry* _pState;
 };
+
+int offset_success(BODY*& iOffsetBody);
+BODY* sg_offset_planar_wire_internal(WIRE* wire, TRANSFORM* wire_transf, law* dist_law, law* twist_law, SPAunit_vector& wire_normal, sg_gap_type close_type, int add_attribs, int trim, int zero_length, int overlap, int iKeepMiniTopo,
+                                     ofst_edge_smooth_manager* iEdgeSmoothMgr);
+
+int is_planar_wire(WIRE* this_wire, SPAposition& centroid, SPAunit_vector& normal, int apply_transf, int use_winding_number);
+void display_wire_offset_io(WIRE* in_wire, law* dist_law, BODY* out_wire);
+int is_open_wire(WIRE* w);
+COEDGE* start_of_wire_chain(WIRE* w);
