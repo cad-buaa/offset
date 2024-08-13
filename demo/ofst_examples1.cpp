@@ -139,3 +139,32 @@ outcome aei_OFFSET_FACE_4(ENTITY_LIST& output_ents, AcisOptions* ptrAcisOpt) {
     }
     return result;
 }
+
+outcome aei_OFFSET_FACE_5(ENTITY_LIST& output_ents, AcisOptions* ptrAcisOpt)
+{
+    FACE* givenface = NULL;
+    FACE* offsetface = NULL;
+    API_BEGIN
+    check_outcome(api_clear_annotations());
+    SPAposition center(0.0, 0.0, 0.0);
+    SPAvector normal(0.0, 0.0, 1.0);
+    double major = 15.0;
+    double minor = 5.0;
+    double tu_start = 0.0;
+    double tu_end = 270.0;
+    double sv_start = 0.0;
+    double sv_end = 180.0;
+    check_outcome(api_face_torus(center, major, minor, tu_start, tu_end, sv_start, sv_end, &normal, givenface));
+    double distance = 5.0;
+    check_outcome(gme_api_offset_face(givenface, distance, offsetface));
+    // check_outcome(api_offset_face(givenface, distance, offsetface));
+    rgb_color Red(1.0, 0.0, 0.0);
+    check_outcome(api_rh_set_entity_rgb(offsetface, Red));
+    check_outcome(api_clear_annotations());
+    API_END
+    if(result.ok()) {
+        output_ents.add(givenface);
+        output_ents.add(offsetface);
+    }
+    return result;
+}

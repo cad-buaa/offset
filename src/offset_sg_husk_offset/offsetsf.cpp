@@ -56,6 +56,7 @@
 #include "acis/base.hxx"
 #include "acis/sp3srtn.hxx"
 #include "acis/sgcofrtn.hxx"
+#include "acis/rot_spl.hxx"
 
 extern APIFINDER apiFinderACIS;
 extern PROCSTATE prostate;
@@ -1843,6 +1844,121 @@ int check_interval_contained_periodic(SPAinterval check_interval, SPAinterval co
     return (contain_interval >> check_interval);
 }
 
+surface* offset_torus(torus* original_torus, double offset_distance, error_info*& err)
+{
+    torus* offs_torus = nullptr;
+    double new_minor_radius = original_torus->minor_radius + offset_distance;
+    if(fabs(new_minor_radius) <= SPAresabs || new_minor_radius * original_torus->minor_radius <= 0.0) 
+    {
+        SPApar_pos uv_fail(0.0, 0.0);
+        if(err) 
+        {
+            err = ACIS_NEW curvature_error_info(&uv_fail, 1, offset_distance, (ENTITY*)0, original_torus->minor_radius);
+        }
+        return offs_torus;
+    }
+    if(original_torus->lemon()) 
+    {
+        if(fabs(new_minor_radius) > -original_torus->major_radius) 
+        {
+            offs_torus = ACIS_NEW torus(original_torus->centre, original_torus->normal, original_torus->major_radius, new_minor_radius);
+        }
+    } else {
+        offs_torus = ACIS_NEW torus(original_torus->centre, original_torus->normal, original_torus->major_radius, new_minor_radius);
+    }
+    if (!offs_torus)
+    {
+        return offs_torus;
+    }
+    offs_torus->uv_oridir = original_torus->uv_oridir;
+    SPApar_box off_pbox = offs_torus->param_range();
+    if(original_torus->subsetted_u()) 
+    {
+        if(!original_torus->subset_u_interval() .empty()) 
+        {
+            offs_torus->limit_u(original_torus->subset_u_interval());
+            if(offs_torus->param_range_u() .empty()) 
+            {
+                offs_torus = nullptr;
+            }
+        }
+    }
+    if(offs_torus) 
+    {
+        if(original_torus->subsetted_v()) 
+        {
+            if(!original_torus->subset_v_interval() .empty()) 
+            {
+                offs_torus->limit_v(original_torus->subset_v_interval());
+                if(offs_torus->param_range_v() .empty()) 
+                {
+                    offs_torus = nullptr;
+                }
+            }
+        }
+    }
+    AcisVersion vt2 = AcisVersion(10, 0, 0);
+    AcisVersion vt1 = GET_ALGORITHMIC_VERSION();
+    if (!(vt1 < vt2))
+    {
+        return offs_torus;
+    }
+    if (!offs_torus)
+    {
+        return offs_torus;
+    }
+    if (!offs_torus->vortex())
+    {
+        return offs_torus;
+    }
+    if (!offs_torus->subsetted())
+    {
+        return offs_torus;
+    }
+    double started = offs_torus->param_range_u().start_pt();
+    if(!offs_torus->singular_u(started)) 
+    {
+        if (!offs_torus->singular_u(offs_torus->param_range_u().end_pt()))
+        {
+            return offs_torus;
+        }
+    }
+    curve* const_v = offs_torus->u_param_line(started);
+    const_v->unlimit();
+    SPAinterval u_range = offs_torus->param_range_u();
+    SPAinterval v_range = offs_torus->param_range_v();
+    if(offs_torus->singular_u(offs_torus->param_range_u().start_pt())) 
+    {
+        u_range = SPAinterval(-M_PI, u_range.end_pt());
+    }
+    if(offs_torus->singular_u(offs_torus->param_range_u().end_pt())) 
+    {
+        u_range = SPAinterval(u_range.start_pt(), M_PI);
+    }
+    SPAunit_vector axis(offs_torus->normal);
+    if (offs_torus->reverse_v)
+    {
+        axis = -axis;
+    }
+    rot_spl_sur* v33 = ACIS_NEW rot_spl_sur(*const_v, offs_torus->centre, axis, u_range, v_range);
+    spline v35(v33);
+    double vval = v_range.mid_pt();
+    double uval = u_range.mid_pt();
+    SPApar_pos uv(uval, vval);
+    SPAunit_vector norm0 = offs_torus->eval_normal(uv);
+    SPAunit_vector norm1 = v35.eval_normal(uv);
+    if ((norm0 % norm1) < 0.0)
+    {
+        v35.negate();
+    }
+    if(const_v) 
+    {
+        ACIS_DELETE const_v;
+    } 
+    ACIS_DELETE offs_torus;
+    return (torus*)&v35;
+}
+
 surface* offset_surface(surface* original_surface, SPAbox& region_of_interest, double offset_distance, int& part_inv, offset_surface_options* off_sur_opts, error_info*& err, int* remake_face, SPApar_box& in_par_box, FACE* in_face, int* did_adaptive,
                         FACE* orig_face) {
     const surface* v12;          // rax
@@ -2003,6 +2119,7 @@ surface* offset_surface(surface* original_surface, SPAbox& region_of_interest, d
             offset_surfacea = offset_sphere((sphere*)original_surface, offset_distance, err);
             break;
         case torus_type:
+            offset_surfacea = offset_torus((torus*)original_surface, offset_distance, err);
             break;
         case spline_type:
             break;
