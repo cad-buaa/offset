@@ -6,6 +6,7 @@
 #include "acis/sphdef.hxx"
 #include "acis/pladef.hxx"
 #include "acis/add_pcu.hxx"
+#include "acis/condef.hxx"
 
 class offset_surface_options : public ACIS_OBJECT {
   public:
@@ -172,3 +173,10 @@ surface* offset_surface(surface* original_surface, SPAbox& region_of_interest, d
                         FACE* orig_face);
 surface* offset_sphere(sphere* original_sphere, double offset_distance, error_info*& err);
 surface* offset_plane(plane* original_plane, double offset_distance);
+surface* offset_cone(cone* original_cone, SPAbox& region_of_interest, double offset_distance, error_info*& err, FACE* in_face, int __formal, int& did_adaptive);
+cone* offset_regular_cylinder(cone& original_cone, const double& offset_distance, error_info*& err, FACE* in_face, int& did_adaptive);
+cone* offset_regular_cone(cone& original_cone, const double& offset_distance, error_info*& err, FACE* in_face);
+int check_interval_contained_periodic(SPAinterval check_interval, SPAinterval contain_interval, double period);
+void add_offset_dist_exceeds_threshold_complexity(FACE* input_face, const double offset_dist, const double threshold);
+
+

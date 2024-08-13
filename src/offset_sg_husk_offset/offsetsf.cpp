@@ -50,9 +50,17 @@
 #include "acis/svc.hxx"
 #include "acis/tolerize_ent.hxx"
 #include "acis/topol.hxx"
+#include "acis/off_spl.hxx"
+#include "acis/exct_spl.hxx"
+#include "acis/acismath.h"
+#include "acis/base.hxx"
+#include "acis/sp3srtn.hxx"
+#include "acis/sgcofrtn.hxx"
 
 extern APIFINDER apiFinderACIS;
 extern PROCSTATE prostate;
+
+
 
 offset_surface_options::offset_surface_options() {
     this->exact_offset_var_blend = 1;
@@ -1479,6 +1487,70 @@ void standard_offsetter::offset_curve(COEDGE* this_coedge, pcurve& pcu_geom, cur
     }
 }
 
+void add_offset_dist_exceeds_threshold_complexity(FACE* input_face, const double offset_dist, const double threshold)
+{
+    //error_info* v3;                         // rax
+    //aux_data_set* data_set;                 // [rsp+38h] [rbp-100h] BYREF
+    //aux_data_manager data_mgr;              // [rsp+40h] [rbp-F8h] BYREF
+    //int err_mess;                           // [rsp+48h] [rbp-F0h]
+    //error_collator::complexity_source src;  // [rsp+4Ch] [rbp-ECh] BYREF
+    //ENTITY* err_ent;                        // [rsp+50h] [rbp-E8h]
+    //error_info_base* error_info_base_ptr;   // [rsp+58h] [rbp-E0h]
+    //COPY_ANNOTATION* ann;                   // [rsp+60h] [rbp-D8h]
+    //FACE* temp_fc;                          // [rsp+68h] [rbp-D0h]
+    //error_info* v12;                        // [rsp+70h] [rbp-C8h]
+    //error_info* v13;                        // [rsp+78h] [rbp-C0h]
+    //error_info* err_info;                   // [rsp+80h] [rbp-B8h]
+    //ENTITY* ent;                            // [rsp+88h] [rbp-B0h]
+    //ATTRIB_TAG* oet;                        // [rsp+90h] [rbp-A8h]
+    //error_info* v17;                        // [rsp+98h] [rbp-A0h]
+    //long double elem;                       // [rsp+A0h] [rbp-98h] BYREF
+    //long double v19;                        // [rsp+A8h] [rbp-90h] BYREF
+    //error_collator* v20;                    // [rsp+B0h] [rbp-88h]
+    //exception_save exception_save_mark;     // [rsp+B8h] [rbp-80h] BYREF
+    //acis_exception error_info_holder;       // [rsp+C8h] [rbp-70h] BYREF
+
+    //if(error_collator::instance()) {
+    //    acis_exception::acis_exception(&error_info_holder, 0, 0i64, 0i64, 0);
+    //    error_info_base_ptr = 0i64;
+    //    exception_save::exception_save(&exception_save_mark);
+    //    exception_save::begin(&exception_save_mark);
+    //    get_error_mark()->buffer_init = 1;
+    //    err_ent = input_face;
+    //    ent = 0i64;
+    //    ann = (COPY_ANNOTATION*)find_annotation(input_face, is_COPY_ANNOTATION, "source", 0i64);
+    //    if(ann) {
+    //        oet = (ATTRIB_TAG*)COPY_ANNOTATION::source(ann);
+    //        temp_fc = (FACE*)ATTRIB_TAG::origin(oet);
+    //        if(temp_fc != input_face) err_ent = temp_fc;
+    //    }
+    //    v12 = (error_info*)ACIS_OBJECT::operator new(0x38ui64, eDefault, "E:\\build\\acis\\NTSwin_b64_debug\\SPAofst\\offset_sg_husk_offset.m\\src\\offsetsf.cpp", 493, &alloc_file_index_3526);
+    //    if(v12) {
+    //        err_mess = message_module::message_code(&spaacisds_offset_errmod, 7);
+    //        error_info::error_info(v12, err_mess, SPA_OUTCOME_PROBLEM, err_ent, 0i64, 0i64);
+    //        v13 = v3;
+    //    } else {
+    //        v13 = 0i64;
+    //    }
+    //    v17 = v13;
+    //    err_info = v13;
+    //    aux_data_manager::aux_data_manager(&data_mgr, v13);
+    //    data_set = 0i64;
+    //    aux_data_manager::make_data_set(&data_mgr, err_ent, "Owner face", &data_set);
+    //    elem = fabs(offset_dist);
+    //    aux_data_manager::make_data_set(&data_mgr, &elem, "Offset Distance", &data_set);
+    //    v19 = fabs(threshold);
+    //    aux_data_manager::make_data_set(&data_mgr, &v19, "Threshold Offset Distance", &data_set);
+    //    aux_data_manager::add_data_set(&data_mgr, "Offset Details", data_set);
+    //    v20 = error_collator::instance();
+    //    src = COMPLEXITY_INPUT;
+    //    error_collator::note_complexity(v20, err_info, &src);
+    //    exception_save::~exception_save(&exception_save_mark);
+    //    if(acis_interrupted()) sys_error(0, error_info_base_ptr);
+    //    acis_exception::~acis_exception(&error_info_holder);
+    //}
+}
+
 surface* offset_plane(plane* original_plane, double offset_distance) {
     plane* offs_plane = nullptr;
     SPAunit_vector plane_normal(original_plane->normal);
@@ -1486,6 +1558,243 @@ surface* offset_plane(plane* original_plane, double offset_distance) {
     offs_plane = ACIS_NEW plane(offset_root, plane_normal);
     offs_plane->u_deriv = original_plane->u_deriv;
     return offs_plane;
+}
+
+cone* offset_regular_cylinder(cone& original_cone, const double& offset_distance, error_info*& err, FACE* in_face, int& did_adaptive)
+{
+    double old_rad = original_cone.base.major_axis.len();
+    double v12;
+    if(original_cone.hollow())
+        v12 = old_rad - offset_distance;
+    else
+        v12 = old_rad + offset_distance;
+    if(did_adaptive && SPAresfit > v12 || SPAresabs > v12) 
+    {
+        double vval = original_cone.param_range_v().start_pt();
+        double uval = original_cone.param_range_u().start_pt();
+        SPApar_pos uv_fail(uval, vval);
+        if(err) 
+        {
+            err = ACIS_NEW curvature_error_info(&uv_fail, 1, offset_distance, (ENTITY*)0, old_rad);
+        }
+        AcisVersion vt2 = AcisVersion(33, 0, 0);
+        AcisVersion vt1 = GET_ALGORITHMIC_VERSION();
+        if (vt1 > vt2)
+        {
+            add_offset_dist_exceeds_threshold_complexity(in_face, offset_distance, old_rad);
+        }
+        return nullptr;
+    } else {
+        SPAvector new_major = original_cone.base.major_axis * (v12 / old_rad);
+        cone* v15 = ACIS_NEW cone(original_cone.base.centre, original_cone.base.normal, new_major, 1.0, original_cone.sine_angle, original_cone.cosine_angle, original_cone.u_param_scale);
+        v15->reverse_u = original_cone.reverse_u;
+        return v15;
+    }
+}
+
+cone* offset_regular_cone(cone& original_cone, const double& offset_distance, error_info*& err, FACE* in_face)
+{
+    cone* offs_cone = nullptr;
+    double sine_angle = original_cone.sine_angle;
+    double d = offset_distance;
+    SPAvector v = -original_cone.base.normal;
+    SPAvector shift = (v * d) * sine_angle;
+    SPAvector new_major_axis = original_cone.base.major_axis + ((offset_distance * original_cone.cosine_angle) * normalise(original_cone.base.major_axis));
+    if (original_cone.cosine_angle * offset_distance >= 0.0)
+    {
+        SPAposition cen = original_cone.base.centre + shift;
+        double u_scale = original_cone.u_param_scale;
+        double cos_ang = original_cone.cosine_angle;
+        double sin_ang = original_cone.sine_angle;
+        offs_cone = ACIS_NEW cone(cen, original_cone.base.normal, new_major_axis, 1.0, sin_ang, cos_ang, u_scale);
+        offs_cone->reverse_u = original_cone.reverse_u;
+        return offs_cone;
+    }
+    AcisVersion cav = GET_ALGORITHMIC_VERSION();
+    int same_polarity = original_cone.cosine_angle > 0.0 && original_cone.sine_angle > 0.0;
+    int zero_length = (SPAresabs * SPAresabs) > (new_major_axis % new_major_axis);
+    if(zero_length || (new_major_axis % original_cone.base.major_axis) < 0.0) 
+    {
+        int proceed = !(cav > AcisVersion(22, 0, 0)) || zero_length || same_polarity == 0;
+        if(proceed) {
+            double vval = original_cone.param_range_v().start_pt();
+            double uval = original_cone.param_range_u().start_pt();
+            SPApar_pos uv_fail(uval, vval);
+            if(err) 
+            {
+                double rad_crv = fabs(original_cone.base.major_axis.len() / original_cone.cosine_angle);
+                err = ACIS_NEW curvature_error_info(&uv_fail, 1, offset_distance, (ENTITY*)0, rad_crv);
+            }
+            /*if(cav > AcisVersion(33, 0, 0)) 
+            {
+                threshold = SPAvector::len(&original_cone->base.major_axis) / original_cone->cosine_angle;
+                offset_dist = *offset_distance;
+                add_offset_dist_exceeds_threshold_complexity(in_face, offset_dist, threshold);
+            }*/
+            return nullptr;
+        }
+    }
+    SPAinterval u_range = original_cone.param_range_u();
+    if (!u_range.finite())
+    {
+        SPAposition cen = original_cone.base.centre + shift;
+        double u_scale = original_cone.u_param_scale;
+        double cos_ang = original_cone.cosine_angle;
+        double sin_ang = original_cone.sine_angle;
+        offs_cone = ACIS_NEW cone(cen, original_cone.base.normal, new_major_axis, 1.0, sin_ang, cos_ang, u_scale);
+        offs_cone->reverse_u = original_cone.reverse_u;
+        return offs_cone;
+    }
+    double u = original_cone.reverse_u ? u_range.start_pt() : u_range.end_pt();
+    if (original_cone.reverse_u != (u > 0.0))
+    {
+        SPAposition cen = original_cone.base.centre + shift;
+        double u_scale = original_cone.u_param_scale;
+        double cos_ang = original_cone.cosine_angle;
+        double sin_ang = original_cone.sine_angle;
+        offs_cone = ACIS_NEW cone(cen, original_cone.base.normal, new_major_axis, 1.0, sin_ang, cos_ang, u_scale);
+        offs_cone->reverse_u = original_cone.reverse_u;
+        return offs_cone;
+    }
+    SPAposition pos = original_cone.eval_position(SPApar_pos(u, 0.0));
+    SPAvector base_to_pos = pos - original_cone.base.centre;
+    double radius_product = base_to_pos % original_cone.base.major_axis;
+    if(radius_product >= 0.0) 
+    {
+        if((SPAresabs * SPAresabs) * (original_cone.base.major_axis % original_cone.base.major_axis) <= (radius_product * radius_product)) 
+        {
+            SPAposition cen = original_cone.base.centre + shift;
+            double u_scale = original_cone.u_param_scale;
+            double cos_ang = original_cone.cosine_angle;
+            double sin_ang = original_cone.sine_angle;
+            offs_cone = ACIS_NEW cone(cen, original_cone.base.normal, new_major_axis, 1.0, sin_ang, cos_ang, u_scale);
+            offs_cone->reverse_u = original_cone.reverse_u;
+            return offs_cone;
+        }
+    }
+    SPApar_pos uv_param(u, 0.0);
+    if(err) 
+    {
+        err = ACIS_NEW curvature_error_info(&uv_param, 1, offset_distance);
+    }
+    return nullptr;
+}
+
+surface* offset_cone(cone* original_cone, SPAbox& region_of_interest, double offset_distance, error_info*& err, FACE* in_face, int __formal, int& did_adaptive)
+{
+    error_info* erra = err;
+    double offset_distancea = offset_distance;
+    if(original_cone->base.radius_ratio == 1.0) {
+        if(original_cone->cylinder())
+            return offset_regular_cylinder(*original_cone, offset_distancea, erra, in_face, did_adaptive);
+        else
+            return offset_regular_cone(*original_cone, offset_distancea, erra, in_face);
+    }
+    cone* subset_cone = (cone*)original_cone->unsubset();
+    SPAinterval u_range = original_cone->param_range_u(region_of_interest);
+    SPAinterval v_range(interval_infinite);
+    if(original_cone->subsetted_v()) {
+        v_range = original_cone->param_range_v();
+    }
+    SPApar_box subset_range(u_range, v_range);
+    subset_cone->limit(subset_range);
+    double started;
+    if(subset_cone->sine_angle * subset_cone->cosine_angle > 0.0 == subset_cone->reverse_u)
+        started = u_range.end_pt();
+    else
+        started = u_range.start_pt();
+    
+    ellipse* min_ellipse = (ellipse*)subset_cone->v_param_line(started);
+    double min_rad_curv = 0.0;
+    double max_rad_curv = 0.0;
+    double major_len2 = 0.0;
+    double minor_len2 = 0.0;
+    if(min_ellipse) {
+        double major_len = min_ellipse->major_axis.len();
+        double minor_len = major_len * min_ellipse->radius_ratio;
+        major_len2 = major_len * major_len;
+        minor_len2 = minor_len * minor_len;
+        min_rad_curv = minor_len * minor_len / major_len;
+        max_rad_curv = major_len * major_len / minor_len;
+    }
+    if(subset_cone->hollow())
+        offset_distancea = offset_distancea;
+    else
+        offset_distancea = -offset_distancea;
+    
+    AcisVersion vt2 = AcisVersion(18, 0, 0);
+    AcisVersion vt1 = GET_ALGORITHMIC_VERSION();
+    int no_offset;
+    if(vt1 < vt2)
+        no_offset = offset_distancea >= min_rad_curv;
+    else
+        no_offset = offset_distancea >= max_rad_curv;
+    int partial_offset = 0;
+    SPAinterval partial_offset_interval;
+    if(!no_offset && offset_distancea >= min_rad_curv) {
+        double x2 = exp((acis_log(major_len2 * minor_len2 / (1.0 / offset_distancea * (1.0 / offset_distancea)))) / 3.0);
+        double sint = acis_sqrt(x2 - minor_len2);
+        double cost = acis_sqrt(major_len2 - x2);
+        double t = acis_atan2(sint, cost);
+        double t_mod = t + (M_PI / 100.0);
+        if(t_mod < M_PI_2) {
+            SPAinterval low_curv_int1(t_mod, M_PI - t_mod);
+            SPAinterval low_curv_int2(t_mod + M_PI, 2.0 * M_PI - t_mod);
+            if(check_interval_contained_periodic(v_range, low_curv_int1, 2.0 * M_PI)) {
+                partial_offset_interval = low_curv_int1;
+                partial_offset = 1;
+            } else {
+                if(check_interval_contained_periodic(v_range, low_curv_int2, 2.0 * M_PI)) {
+                    partial_offset_interval = low_curv_int2;
+                    partial_offset = 1;
+                } else {
+                    no_offset = 1;
+                }
+            }
+        }
+    }
+    if(min_ellipse) {
+        ACIS_DELETE min_ellipse;
+    }
+    surface* offset_surf = nullptr;
+    if(!no_offset) {
+        if(partial_offset) {
+            double new_u_start = u_range.start_pt() - 0.2 * u_range.length();
+            double new_u_end = u_range.end_pt() + 0.2 * u_range.length();
+            SPAinterval new_u_range(new_u_start, new_u_end);
+            subset_cone->unlimit_u();
+            subset_cone->unlimit_v();
+            subset_cone->limit_u(new_u_range);
+            subset_cone->limit_v(partial_offset_interval);
+            SPApar_box new_param_range(new_u_range, partial_offset_interval);
+            SPAbox sf_box = subset_cone->bound(new_param_range);
+            bs3_surf_def* bs3 = bs3_surface_make_con(*subset_cone, sf_box);
+            exact_spl_sur* bs3_exact_splsur = ACIS_NEW exact_spl_sur(bs3);
+            spline* v44 = ACIS_NEW spline(bs3_exact_splsur);
+            off_spl_sur* v46 = ACIS_NEW off_spl_sur(*v44, offset_distancea);
+            spline* v48 = ACIS_NEW spline(v46);
+            offset_surf = (surface*)v48;
+            if(v44) {
+                ACIS_DELETE v44;
+            } 
+        } else {
+            subset_cone->unlimit_v();
+            off_spl_sur* splsur = ACIS_NEW off_spl_sur(*subset_cone, offset_distancea);
+            offset_surf = (surface*)(ACIS_NEW spline(splsur));
+        }
+        if(subset_cone) {
+            ACIS_DELETE subset_cone;
+        } 
+        return (cone*)offset_surf;
+    }
+    SPApar_pos uv_fail(started, 0.0);
+    if(erra) {
+        erra = ACIS_NEW curvature_error_info(&uv_fail, 1, offset_distancea, NULL, min_rad_curv);
+    }
+    if(subset_cone) {
+        ACIS_DELETE subset_cone;
+    } 
+    return nullptr;
 }
 
 surface* offset_sphere(sphere* original_sphere, double offset_distance, error_info*& err) {
@@ -1502,6 +1811,36 @@ surface* offset_sphere(sphere* original_sphere, double offset_distance, error_in
         offs_sphere->pole_dir = original_sphere->pole_dir;
     }
     return offs_sphere;
+}
+
+int check_interval_contained_periodic(SPAinterval check_interval, SPAinterval contain_interval, double period)
+{
+    if (check_interval.length() > contain_interval.length())
+    {
+        return 0;
+    }
+    while(1) {
+        double started = check_interval.start_pt();
+        if(started - contain_interval.start_pt() <= period) 
+        {
+            if (check_interval.end_pt() - contain_interval.end_pt() <= period)
+            {
+                break;
+            }
+        }
+        check_interval -= period;
+    }
+    while(1) {
+        if(contain_interval.start_pt() - check_interval.start_pt() <= period) 
+        {
+            if (contain_interval.end_pt() - check_interval.end_pt() <= period)
+            {
+                break;
+            }
+        }
+        check_interval += period;
+    }
+    return (contain_interval >> check_interval);
 }
 
 surface* offset_surface(surface* original_surface, SPAbox& region_of_interest, double offset_distance, int& part_inv, offset_surface_options* off_sur_opts, error_info*& err, int* remake_face, SPApar_box& in_par_box, FACE* in_face, int* did_adaptive,
@@ -1658,7 +1997,7 @@ surface* offset_surface(surface* original_surface, SPAbox& region_of_interest, d
             offset_surfacea = offset_plane((plane*)original_surface, offset_distance);
             break;
         case cone_type:
-            // offset_surfacea = offset_cone((const cone*)original_surface, region_of_interest, offset_distance, err, in_face, 1, did_adaptive);
+            offset_surfacea = offset_cone((cone*)original_surface, region_of_interest, offset_distance, err, in_face, 1, *did_adaptive);
             break;
         case sphere_type:
             offset_surfacea = offset_sphere((sphere*)original_surface, offset_distance, err);

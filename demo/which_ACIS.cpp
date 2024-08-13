@@ -221,6 +221,10 @@ ACIS_fp find_which_ACIS(WORD id) {
             return aei_OFFSET_FACE_1;
         case ID_OFST_FACE2:
             return aei_OFFSET_FACE_2;
+        case ID_OFST_FACE3:
+            return aei_OFFSET_FACE_3;
+        case ID_OFST_FACE4:
+            return aei_OFFSET_FACE_4;
 
         default:
             return nullptr;

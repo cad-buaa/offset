@@ -85,3 +85,57 @@ outcome aei_OFFSET_FACE_2(ENTITY_LIST& output_ents, AcisOptions* ptrAcisOpt) {
     }
     return result;
 }
+
+outcome aei_OFFSET_FACE_3(ENTITY_LIST& output_ents, AcisOptions* ptrAcisOpt) {
+    FACE* givenface = NULL;
+    FACE* offsetface = NULL;
+    API_BEGIN
+    check_outcome(api_clear_annotations());
+    SPAposition center(0.0, 0.0, 0.0);
+    SPAvector normal(0.0, 0.0, 10.0);
+    double bottom = 10.0;
+    double top = 10.0;
+    double ratio = 1.0;
+    SPAposition pt(10.0, 0.0, 0.0);
+    check_outcome(api_face_cylinder_cone(center, normal, bottom, top, 0.0, 180.0, ratio, &pt, givenface));
+    double distance = 10.0;
+    check_outcome(gme_api_offset_face(givenface, distance, offsetface));
+    //check_outcome(api_offset_face(givenface, distance, offsetface));
+
+    rgb_color Red(1.0, 0.0, 0.0);
+    check_outcome(api_rh_set_entity_rgb(offsetface, Red));
+    check_outcome(api_clear_annotations());
+    API_END
+    if(result.ok()) {
+        output_ents.add(givenface);
+        output_ents.add(offsetface);
+    }
+    return result;
+}
+
+outcome aei_OFFSET_FACE_4(ENTITY_LIST& output_ents, AcisOptions* ptrAcisOpt) {
+    FACE* givenface = NULL;
+    FACE* offsetface = NULL;
+    API_BEGIN
+    check_outcome(api_clear_annotations());
+    SPAposition center(0.0, 0.0, 0.0);
+    SPAvector normal(0.0, 0.0, 10.0);
+    double bottom = 10.0;
+    double top = 0.0;
+    double ratio = 1.0;
+    SPAposition pt(10.0, 0.0, 0.0);
+    check_outcome(api_face_cylinder_cone(center, normal, bottom, top, 0.0, 180.0, ratio, &pt, givenface));
+    double distance = 10.0;
+    check_outcome(gme_api_offset_face(givenface, distance, offsetface));
+    // check_outcome(api_offset_face(givenface, distance, offsetface));
+
+    rgb_color Red(1.0, 0.0, 0.0);
+    check_outcome(api_rh_set_entity_rgb(offsetface, Red));
+    check_outcome(api_clear_annotations());
+    API_END
+    if(result.ok()) {
+        output_ents.add(givenface);
+        output_ents.add(offsetface);
+    }
+    return result;
+}
