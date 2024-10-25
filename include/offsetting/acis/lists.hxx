@@ -1,4 +1,4 @@
-/*******************************************************************/
+﻿/*******************************************************************/
 /*    Copyright (c) 1989-2020 by Spatial Corp.                     */
 /*    All rights reserved.                                         */
 /*    Protected by U.S. Patents 5,257,205; 5,351,196; 6,369,815;   */
@@ -100,6 +100,7 @@ class LIST_HEADER;
 class DECL_KERN ENTITY_LIST : public ACIS_OBJECT {
     friend class EE_LIST;  // An ENTITY version of ENTITY_LIST
 
+  public:  // 不确定
     LIST_HEADER* header;
 
   public:

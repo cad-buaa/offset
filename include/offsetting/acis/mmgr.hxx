@@ -501,9 +501,9 @@ DECL_BASE void   acis_free( void * alloc_ptr);
          * ACIS wrapper for C++ new - Complements <tt>ACIS_DELETE</tt>.
          * <br>
          * Use ACIS_DELETE in following two cases <br>
-         *  • Class/struct derived from ACIS_OBJECT <br>
+         *  ?Class/struct derived from ACIS_OBJECT <br>
          *           Example: ENTITY class <br>
-         *  • Class/struct has MMGR_FREELIST_THIS macro inside its definition.  <br>
+         *  ?Class/struct has MMGR_FREELIST_THIS macro inside its definition.  <br>
          *           Example: SPAPosition class <br>
          * <br> <br>
          * For all other cases use ACIS_DELETE with STD_CAST. <br>
@@ -552,9 +552,9 @@ DECL_BASE void   acis_free( void * alloc_ptr);
          * Informs the ACIS memory manager that a simple data type is being deleted.
          * <br>
          * here simple data types referes to <br>
-         *  • Datatypes such as int, char, float, double, union etc and its pointers<br>
-         *  • Class/struct not derived from ACIS_OBJECT <br>
-         *  • Class/struct does not have MMGR_FREELIST_THIS macro inside its definition<br>
+         *  ?Datatypes such as int, char, float, double, union etc and its pointers<br>
+         *  ?Class/struct not derived from ACIS_OBJECT <br>
+         *  ?Class/struct does not have MMGR_FREELIST_THIS macro inside its definition<br>
          * <b>Role:</b> When deleting a simple data type using <tt>ACIS_DELETE</tt>, you
          * must use the <tt>STD_CAST</tt> macro.
          * <br><br>

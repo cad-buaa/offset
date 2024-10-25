@@ -242,7 +242,9 @@ enum evaluate_curve_side {
  */
 class DECL_KERN curve : public ACIS_OBJECT {
 
-protected:
+//²»È·¶¨
+
+ public:
 
 	// Any curve may be subsetted to a given parameter range.
 /**

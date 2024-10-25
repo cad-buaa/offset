@@ -1,4 +1,4 @@
-/*******************************************************************/
+﻿/*******************************************************************/
 /*    Copyright (c) 1989-2020 by Spatial Corp.                     */
 /*    All rights reserved.                                         */
 /*    Protected by U.S. Patents 5,257,205; 5,351,196; 6,369,815;   */
@@ -387,7 +387,9 @@ enum interval_type { interval_unknown, interval_finite, interval_finite_below, i
 class DECL_BASE SPAinterval : public ACIS_OBJECT {
     double low;
     double high;
+    // 不确定
 
+  public:
     interval_type type_data;
 
     // Special constructor to bypass order checking.

@@ -146,7 +146,7 @@ class DECL_KERN EDGE: public ENTITY {
     // The replace_x_with_tx functions need special access to protected parts of EDGE so they have been
     // made friends. This became necessary when the TVERTEX versions of the set_start/end methods were
     // merged with the VERTEX versions. AL 07Mar2007.
-
+public:
 	friend DECL_KERN logical replace_edge_with_tedge_internal(
 		EDGE *,	logical, logical, TEDGE * &, double const &, logical, tolerize_options*);
 	

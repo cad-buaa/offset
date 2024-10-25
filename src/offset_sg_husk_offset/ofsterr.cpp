@@ -84,8 +84,6 @@ void ofst_term()
 
 void ofst_error(int err_num, int hopeless, ENTITY* e_ent)
 {
-    
-    
     //breakpoint_callback* breakpoint_callback;  // [rsp+28h] [rbp-50h]
     //RenderingObject* v6;                       // [rsp+30h] [rbp-48h]
     //breakpoint_callback* v7;                   // [rsp+38h] [rbp-40h]

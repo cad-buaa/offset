@@ -27,3 +27,16 @@ DECL_BASE void ACISExceptionCheck(const char*);
 
 #endif /* ACIS_OLD_HEADER_INCLUDED */
 
+//int initialize_base(base_configuration* base_config)
+//{
+//    mutex_object::mutex_object(&this_mutex, &base_mutex);
+//    initialize_thread();
+//    int success = 1;
+//    if(!safe_function_type<int>::operator int(&init_count_1)) {
+//        success = initialize_mmgr(base_config);
+//        invoke_init_instance_callbacks();
+//    }
+//    safe_floating_type<int>::operator++(&init_count_1);
+//    mutex_object::~mutex_object(&this_mutex);
+//    return success;
+//}

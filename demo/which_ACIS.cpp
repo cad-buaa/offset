@@ -228,6 +228,8 @@ ACIS_fp find_which_ACIS(WORD id) {
         case ID_OFST_FACE5:
             return aei_OFFSET_FACE_5;
 
+        case ID_OFST_WIRE1:
+            return aei_OFFSET_WIRE_1;
         default:
             return nullptr;
     }
