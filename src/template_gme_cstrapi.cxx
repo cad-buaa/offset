@@ -21,8 +21,8 @@
 #include "acis/sweepapi.hxx"
 
 outcome gme_api_sweep_make_cuboid(double width, double depth, double height, BODY*& body) {
-    DEBUG_LEVEL(DEBUG_CALLS)
-    fprintf(debug_file_ptr, "calling api_gme_sweep_make_cuboid\n");
+    //DEBUG_LEVEL(DEBUG_CALLS)
+    //fprintf(debug_file_ptr, "calling api_gme_sweep_make_cuboid\n");
 
     API_BEGIN
 
@@ -60,9 +60,9 @@ outcome gme_api_sweep_make_cuboid(double width, double depth, double height, BOD
     result = outcome(body == NULL ? API_FAILED : 0);
     API_END
 
-    DEBUG_LEVEL(DEBUG_FLOW) {
-        fprintf(debug_file_ptr, "calling gme_api_sweep_make_cuboid\n");
-    }
+    //DEBUG_LEVEL(DEBUG_FLOW) {
+    //    fprintf(debug_file_ptr, "calling gme_api_sweep_make_cuboid\n");
+    //}
 
     return result;
 }

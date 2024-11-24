@@ -11,7 +11,62 @@
 #define ATTRIB_OFFREL_NAME "offrel"
 
 // ATTCOPY_DEF("offrel")
-ATTCOPY_DEF("offrel")
+int ATTRIB_OFFREL_TYPE = 0;
+
+int is_ATTRIB_OFFREL(const ENTITY* e) {
+    return ((e != 0) && (e->identity(ATTRIB_OFFREL_LEVEL) == ATTRIB_OFFREL_TYPE));
+}
+static ENTITY* ATTRIB_OFFREL_restore_data();
+extern DECL_KERN restore_def* ATTRIB_SG_subclasses;
+DECL_NONE restore_def* ATTRIB_OFFREL_subclasses;
+static restore_def ATTRIB_OFFREL_restore_def(ATTRIB_SG_subclasses, ATTRIB_OFFREL_NAME, ATTRIB_OFFREL_TYPE, ATTRIB_OFFREL_restore_data, &ATTRIB_OFFREL_subclasses);
+static METHOD_TABLE ATTRIB_OFFREL_METHODS;
+MethodFunction ATTRIB_OFFREL::add_method(METHOD_ID const& id, MethodFunction func) {
+    return ATTRIB_OFFREL_METHODS.add(id, func);
+}
+int ATTRIB_OFFREL::call_method(METHOD_ID const& id, METHOD_ARGS const& args) {
+    if(strcmp(args.id(), id.arg_id())) return 0;
+    MethodFunction func = ATTRIB_OFFREL_METHODS.find(id);
+    if(func)
+        return (*func)(this, args);
+    else
+        return ATTRIB_SG::call_method(id, args);
+}
+ENTITY* ATTRIB_OFFREL::make_copy() const {
+    ATTRIB_OFFREL* rollback = new(eDefault, "D:\\offsetting\\module-dev-offsetting\\src\\offset_sg_husk_cur_off\\at_rel.cpp", 14, &alloc_file_index) ATTRIB_OFFREL;
+    *rollback = *this;
+    fixup_copy(rollback);
+    return rollback;
+}
+int ATTRIB_OFFREL::identity(int level) const {
+    return level == 0 ? ATTRIB_OFFREL_TYPE : level < 0 ? ATTRIB_SG::identity(level + 1) : level > ATTRIB_OFFREL_LEVEL ? -1 : level == ATTRIB_OFFREL_LEVEL ? ATTRIB_OFFREL_TYPE : ATTRIB_SG::identity(level);
+}
+const char* ATTRIB_OFFREL::type_name() const {
+    return ATTRIB_OFFREL_NAME;
+}
+unsigned ATTRIB_OFFREL::size() const {
+    return sizeof(ATTRIB_OFFREL);
+}
+void ATTRIB_OFFREL::save(ENTITY_LIST& list) const {
+    save_begin();
+    save_common(list);
+    save_end(list);
+}
+static ENTITY* ATTRIB_OFFREL_restore_data() {
+    ATTRIB_OFFREL* new_ent = new(eDefault, "D:\\offsetting\\module-dev-offsetting\\src\\offset_sg_husk_cur_off\\at_rel.cpp", 14, &alloc_file_index) ATTRIB_OFFREL;
+    new_ent->restore_common();
+    return new_ent;
+}
+void ATTRIB_OFFREL::fix_pointers(ENTITY* array[], SCAN_TYPE reason) {
+    fix_common(array, reason);
+}
+ENTITY* ATTRIB_OFFREL::copy_data(ENTITY_LIST& list, pointer_map* pm, int dpcpy_skip, SCAN_TYPE reason) const {
+    ATTRIB_OFFREL* new_att = new(eDefault, "D:\\offsetting\\module-dev-offsetting\\src\\offset_sg_husk_cur_off\\at_rel.cpp", 14, &alloc_file_index) ATTRIB_OFFREL;
+    new_att->copy_common(list, this, pm, dpcpy_skip, reason);
+    return new_att;
+}
+void ATTRIB_OFFREL::fixup_copy(ATTRIB_OFFREL* rollback) const {
+    ATTRIB_SG::fixup_copy(rollback);
 }
 void ATTRIB_OFFREL::lose() {
     ATTRIB_SG::lose();
@@ -84,16 +139,20 @@ ATTRIB_OFFREL::ATTRIB_OFFREL(ENTITY* owner, const offset_segment& off_seg): ATTR
         this->set_vertex(off_seg.original_vertex());
     }
 }
+//不确定
+ATTRIB_OFFREL::ATTRIB_OFFREL(ENTITY* owner, VERTEX* orig_vertex) 
+{
+    this->c = nullptr;
+    this->v = nullptr;
+    this->set_vertex(orig_vertex);
+}
 
-// ATTRIB_OFFREL::ATTRIB_OFFREL& operator=(const ATTRIB_OFFREL& __that) {
-//
-//
-// }
 
 void ATTRIB_OFFREL::split_owner(ENTITY* new_ent) {
     if(this->c) {
         ATTRIB_OFFREL* v2 = ACIS_NEW ATTRIB_OFFREL(new_ent, this->c);
-    } else {
+    } 
+    else {
         ATTRIB_OFFREL* v3 = ACIS_NEW ATTRIB_OFFREL(new_ent, this->v);
     }
 }
@@ -106,7 +165,7 @@ void ATTRIB_OFFREL::set_coedge(COEDGE* orig_coedge) {
     }
 }
 void ATTRIB_OFFREL::set_vertex(VERTEX* orig_vertex) {
-    if(this->v != orig_vertex, 0) {
+    if(this->v != orig_vertex) {
         this->backup();
         this->c = nullptr;
         this->v = orig_vertex;

@@ -198,16 +198,6 @@ extern PROCSTATE prostate;
 //     }
 // }
 
-int do_boolean(BODY* tool_body, BODY* blank_body, BOOL_TYPE type, BODY*& outside_body, BODY*& leftovers, NDBOOL_KEEP ndbool_keep, BODY*& ndbool_result, glue_options* glue_opts, int quick_failure_preferred) {
-    typedef int (*do_boolean)(BODY* tool_body, BODY* blank_body, BOOL_TYPE type, BODY*& outside_body, BODY*& leftovers, NDBOOL_KEEP ndbool_keep, BODY*& ndbool_result, glue_options* glue_opts, int quick_failure_preferred);
-    do_boolean f = (do_boolean)apiFinderACIS.GetAddress("?do_boolean@@YAHPEAVBODY@@0W4BOOL_TYPE@@AEAPEAV1@2W4NDBOOL_KEEP@@2PEBVglue_options@@H@Z", prostate);
-    if(f) {
-        return f(tool_body, blank_body, type, outside_body, leftovers, ndbool_keep, ndbool_result, glue_opts, quick_failure_preferred);
-    } else {
-        return NULL;
-    }
-}
-
 void get_intersection_info(curve_curve_int* iIntersections, int& oNumIntersections, int& oNumOverlaps, int& oNumUnknown) {
     oNumIntersections = 0;
     oNumOverlaps = 0;
@@ -244,23 +234,22 @@ ofst_edge_smooth_manager::ofst_edge_smooth_manager() {
 }
 ofst_edge_smooth_manager::~ofst_edge_smooth_manager() {
     this->relese_allocations();
-    this->mBaseEdges.~ENTITY_LIST();
 }
 void ofst_edge_smooth_manager::relese_allocations() {
     if(this->mSmoothLevel) {
-        delete[](this->mSmoothLevel);
+        ACIS_DELETE[] STD_CAST this->mSmoothLevel;
         this->mSmoothLevel = nullptr;
     }
     if(this->mLastSmoothLevel) {
-        delete[](this->mLastSmoothLevel);
+        ACIS_DELETE[] STD_CAST this->mLastSmoothLevel;
         this->mLastSmoothLevel = nullptr;
     }
     if(this->mNumIntersections) {
-        delete[](this->mNumIntersections);
+        ACIS_DELETE[] STD_CAST this->mNumIntersections;
         this->mNumIntersections = nullptr;
     }
     if(this->mNumOverlaps) {
-        delete[](this->mNumOverlaps);
+        ACIS_DELETE[] STD_CAST this->mNumOverlaps;
         this->mNumOverlaps = nullptr;
     }
 }
@@ -293,7 +282,7 @@ int ofst_edge_smooth_manager::init(ENTITY_LIST* iEdges, int iMaxSmoothLevel, int
             this->mMaxSmoothLevel = iMaxSmoothLevel;
         this->mMaxIteration = iMaxIteration;
     }
-    if(retOk) this->mBaseEdges = *(const ENTITY_LIST*)(iEdges->header);  // 不确定
+    if(retOk) this->mBaseEdges = (const ENTITY_LIST&)iEdges->header;  // 不确定
     return retOk;
 }
 

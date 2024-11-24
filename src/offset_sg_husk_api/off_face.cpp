@@ -1220,9 +1220,9 @@ outcome offset_face_internal(FACE* given_face, double offset_distance, FACE*& of
 // }
 
 outcome gme_api_offset_face(FACE* given_face, double offset_distance, FACE*& offset_face, offset_options* pOffOpts, AcisOptions* ao) {
-    DEBUG_LEVEL(DEBUG_CALLS) {
-        acis_fprintf(debug_file_ptr, "calling api_offset_face\n");
-    }
+    //DEBUG_LEVEL(DEBUG_CALLS) {
+    //    acis_fprintf(debug_file_ptr, "calling api_offset_face\n");
+    //}
     API_BEGIN
     AcisVersion* av;
     if(ao) {
@@ -1239,8 +1239,8 @@ outcome gme_api_offset_face(FACE* given_face, double offset_distance, FACE*& off
     }
     result = offset_face_internal(given_face, offset_distance, offset_face, pOffOpts);
     API_END
-    DEBUG_LEVEL(DEBUG_FLOW) {
-        acis_fprintf(debug_file_ptr, "leaving api_offset_face: %s\n", find_err_ident(result.error_number()));
-    }
+    //DEBUG_LEVEL(DEBUG_FLOW) {
+    //    acis_fprintf(debug_file_ptr, "leaving api_offset_face: %s\n", find_err_ident(result.error_number()));
+    //}
     return result;
 }

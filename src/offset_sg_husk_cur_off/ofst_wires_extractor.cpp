@@ -6,15 +6,23 @@
 #include "acis/geometry.hxx"
 #include "acis/point.hxx"
 #include "acis/sgquery.hxx"
+#include "acis/module.hxx"
+
+
+#define MODULE() ofstwireextractor
+module_debug ofstwireextractor_module_header("ofstwireextractor");
 
 void add_wire_0(WIRE* iWire, WIRE*& ioWireList) {
+    WIRE* i;
     WIRE* lastWire;
     // if(!iWire) _wassert(L"iWire", L"E:\\build\\acis\\NTSwin_b64_debug\\SPAofst\\offset_sg_husk_cur_off.m\\src\\ofst_wires_extractor.cpp", 0x384u);
     if(ioWireList) {
         lastWire = ioWireList;
-        for(WIRE* i = ioWireList->next(PAT_CAN_CREATE); i; i = lastWire->next(PAT_CAN_CREATE)) lastWire = lastWire->next(PAT_CAN_CREATE);
+        for(i = ioWireList->next(PAT_CAN_CREATE); i; i = lastWire->next(PAT_CAN_CREATE)) 
+            lastWire = lastWire->next(PAT_CAN_CREATE); 
         lastWire->set_next(iWire, 1);
-    } else {
+    } 
+    else {
         ioWireList = iWire;
     }
 }
@@ -106,14 +114,19 @@ ofst_wires_extractor::~ofst_wires_extractor() {
 
 int ofst_wires_extractor::extract(offset_segment_list* iSeglist, WIRE*& ioWireList, const int iExtractLoopOnly, const int iRemoveOverlap) {
     int retVal = 0;
+
     // if(ioWireList) _wassert(L"ioWireList == NULL", L"E:\\build\\acis\\NTSwin_b64_debug\\SPAofst\\offset_sg_husk_cur_off.m\\src\\ofst_wires_extractor.cpp", 0x31Fu);
     if(!this->init(iSeglist)) return 0;
+
     if(this->degenrated_cases()) return 1;
     this->mRemoveOverlap = iRemoveOverlap != 0;
-    for(int seedInd = this->get_seed_segment(0); seedInd >= 0; seedInd = this->get_seed_segment(0)) {
-        WIRE* extractedWire = this->extract_closed_wire(seedInd);
-        if(extractedWire) add_wire_0(extractedWire, ioWireList);
+
+    for(int seedInd = this->get_seed_segment(0); seedInd >= 0; seedInd = this->get_seed_segment(0)) //找到0状态（未处理状态）的第一个Segments，并返回对应的索引
+    {
+        WIRE* extractedWire = this->extract_closed_wire(seedInd);//将未处理的segment设置成处理过后
+        if(extractedWire) add_wire_0(extractedWire, ioWireList);//ioWireList set_next(extractedWire)
     }
+
     if(!iExtractLoopOnly) {
         this->init_segment_marks();
         for(int seedInda = this->get_seed_segment(0); seedInda >= 0; seedInda = this->get_seed_segment(0)) {
@@ -182,7 +195,6 @@ int ofst_wires_extractor::init(offset_segment_list* iSegList) {
 }
 void ofst_wires_extractor::init_segment_marks() {
     int i;
-
     for(i = 0; i < this->mNumSegmens; ++i) {
         if(this->mSegments[i]->get_user_flag() != 4) this->mark_segment(i, 0);
     }
@@ -230,16 +242,22 @@ int ofst_wires_extractor::get_next_connected_seg() {
 }
 WIRE* ofst_wires_extractor::extract_closed_wire(const int iSeedInd) {
     WIRE* retWire = nullptr;
-    if(iSeedInd >= 0 && iSeedInd < this->mNumSegmens) {
-        this->init_wire_creation();
+    if(iSeedInd >= 0 && iSeedInd < this->mNumSegmens) 
+    {
+        this->init_wire_creation();//将this->mWorkingWire[i] = -1, this->mNumSegmentsInWorkWire = 0;
         int nextSeg = iSeedInd;
-        while(nextSeg >= 0) {
-            this->add_last_segment(nextSeg);
-            int loopStart = this->search_loop();
+
+
+        while(nextSeg >= 0) 
+        {
+            this->add_last_segment(nextSeg);//将segment_list[nextSeg]的user_flag设置成正在处理状态(1),将this->mWorkingWire[this->mNumSegmentsInWorkWire++] = nextSeg
+
+            int loopStart = this->search_loop();//找到环开始的索引,但是对于第一个segment，返回-1，
             if(loopStart < 0) {
-                do nextSeg = this->get_next_connected_seg();
+                do nextSeg = this->get_next_connected_seg();//找到下一个segment的索引
                 while(nextSeg < 0 && this->remove_last_segment());
-            } else {
+            } 
+            else {
                 retWire = this->extract_wire(loopStart);
                 nextSeg = -1;
             }
@@ -248,54 +266,62 @@ WIRE* ofst_wires_extractor::extract_closed_wire(const int iSeedInd) {
     return retWire;
 }
 WIRE* ofst_wires_extractor::extract_open_wire(const int iSeedInd) {
+    int nextSeg;
     WIRE* retWire = nullptr;
     if(iSeedInd >= 0 && iSeedInd < this->mNumSegmens) {
         this->init_wire_creation();
-        for(int nextSeg = iSeedInd; nextSeg >= 0; nextSeg = this->get_next_connected_seg()) this->add_last_segment(nextSeg);
+        for(nextSeg = iSeedInd; nextSeg >= 0; nextSeg = this->get_next_connected_seg()) {
+            this->add_last_segment(nextSeg);
+        }
         return this->extract_wire(0);
     }
     return retWire;
 }
 WIRE* ofst_wires_extractor::extract_wire(const int iStartIndex) {
-    return nullptr;
-    // ATTRIB_OFFREL* v9;  // [rsp+48h] [rbp-30h]
-    // WIRE* v10;          // [rsp+50h] [rbp-28h]
 
-    // WIRE* retWire[4];  // [rsp+58h] [rbp-20h] BYREF
+     ATTRIB_OFFREL* v9;  // [rsp+48h] [rbp-30h]
+     WIRE* v10;          // [rsp+50h] [rbp-28h]
 
-    ///*if(!this->mWorkingWire || iStartIndex < 0 || iStartIndex >= this->mNumSegmentsInWorkWire)
-    // _wassert(L"mWorkingWire && iStartIndex >= 0 && iStartIndex < mNumSegmentsInWorkWire", L"E:\\build\\acis\\NTSwin_b64_debug\\SPAofst\\offset_sg_husk_cur_off.m\\src\\ofst_wires_extractor.cpp", 0x20Cu);*/
-    // retWire[0] = NULL;
-    // for(int i = 0; i < this->mNumSegmentsInWorkWire; ++i) {
-    //    if(i >= iStartIndex)
-    //        this->mark_segment(this->mWorkingWire[i], 4);
-    //    else
-    //        this->mark_segment(this->mWorkingWire[i], 0);
-    //}
-    // if(this->mRemoveOverlap == 1 && this->remove_overlap(iStartIndex, this->mNumSegmentsInWorkWire - iStartIndex)) {
-    //    this->mNumSegmentsInWorkWire -= (this->mNumSegmentsInWorkWire - iStartIndex) / 2;
-    //    this->mRemoveOverlap = 2;
-    //}
-    // if(!this->is_wire_connect_to_main_segments(iStartIndex) && !this->is_self_loop(iStartIndex) && !this->wire_is_too_close(iStartIndex, this->mNumSegmentsInWorkWire - iStartIndex)) {
-    //    int startConnectionId = this->mSegsList->get_start_segment_connectionId();
-    //    for(int ia = iStartIndex; ia < this->mNumSegmentsInWorkWire; ++ia) {
-    //        offset_segment* crrSeg = this->get_segment(this->mWorkingWire[ia]);
-    //        /* if(!crrSeg) _wassert(L"crrSeg", L"E:\\build\\acis\\NTSwin_b64_debug\\SPAofst\\offset_sg_husk_cur_off.m\\src\\ofst_wires_extractor.cpp", 0x228u);*/
-    //        if(!this->mMainSegmentsConnectionId && startConnectionId == crrSeg->get_start_connectionId()) {
-    //            this->store_main_segments_connectionId(iStartIndex);
-    //        }
-    //        COEDGE* crrCoedge = crrSeg->coedge();
-    //        /*if(!crrCoedge) _wassert(L"crrCoedge", L"E:\\build\\acis\\NTSwin_b64_debug\\SPAofst\\offset_sg_husk_cur_off.m\\src\\ofst_wires_extractor.cpp", 0x231u);*/
-    //        if(this->mSegListAddAttribs) {
-    //            ATTRIB_OFFREL* v10 = ACIS_NEW ATTRIB_OFFREL(crrCoedge, *crrSeg);  // 不确定
-    //            retWire[1] = v10;
-    //            crrCoedge->set_attrib((ATTRIB*)v10);
-    //        }
-    //        add_coedge_to_wire(crrCoedge, *retWire);
-    //    }
-    //}
-    // if(ofstwireextractor_module_header.debug_level >= 40) this->dump_wire(iStartIndex);
-    // return retWire[0];
+     WIRE* retWire[4];  // [rsp+58h] [rbp-20h] BYREF
+
+    /*if(!this->mWorkingWire || iStartIndex < 0 || iStartIndex >= this->mNumSegmentsInWorkWire)
+     _wassert(L"mWorkingWire && iStartIndex >= 0 && iStartIndex < mNumSegmentsInWorkWire", L"E:\\build\\acis\\NTSwin_b64_debug\\SPAofst\\offset_sg_husk_cur_off.m\\src\\ofst_wires_extractor.cpp", 0x20Cu);*/
+     retWire[0] = nullptr;
+     for(int i = 0; i < this->mNumSegmentsInWorkWire; ++i) 
+     {
+        if(i >= iStartIndex)
+            this->mark_segment(this->mWorkingWire[i], 4);
+        else
+            this->mark_segment(this->mWorkingWire[i], 0);
+     }
+     if(this->mRemoveOverlap == 1 && this->remove_overlap(iStartIndex, this->mNumSegmentsInWorkWire - iStartIndex)) 
+     {
+        this->mNumSegmentsInWorkWire -= (this->mNumSegmentsInWorkWire - iStartIndex) / 2;
+        this->mRemoveOverlap = 2;
+     }
+     if(!this->is_wire_connect_to_main_segments(iStartIndex) && !this->is_self_loop(iStartIndex) && !this->wire_is_too_close(iStartIndex, this->mNumSegmentsInWorkWire - iStartIndex)) {
+        int startConnectionId = this->mSegsList->get_start_segment_connectionId();
+        for(int ia = iStartIndex; ia < this->mNumSegmentsInWorkWire; ++ia) {
+            offset_segment* crrSeg = this->get_segment(this->mWorkingWire[ia]);
+            /* if(!crrSeg) _wassert(L"crrSeg", L"E:\\build\\acis\\NTSwin_b64_debug\\SPAofst\\offset_sg_husk_cur_off.m\\src\\ofst_wires_extractor.cpp", 0x228u);*/
+            if(!this->mMainSegmentsConnectionId && startConnectionId == crrSeg->get_start_connectionId()) {
+                this->store_main_segments_connectionId(iStartIndex);
+            }
+            COEDGE* crrCoedge = crrSeg->coedge();
+            /*if(!crrCoedge) _wassert(L"crrCoedge", L"E:\\build\\acis\\NTSwin_b64_debug\\SPAofst\\offset_sg_husk_cur_off.m\\src\\ofst_wires_extractor.cpp", 0x231u);*/
+            if(this->mSegListAddAttribs) {
+                ATTRIB_OFFREL* v10 = ACIS_NEW ATTRIB_OFFREL(crrCoedge, *crrSeg);  // 不确定
+                retWire[1] = (WIRE*)v10;
+                crrCoedge->set_attrib(v10);
+            }
+            add_coedge_to_wire(crrCoedge, *retWire);
+        }
+     }
+     DEBUG_LEVEL(DEBUG_ALL) {
+         this->dump_wire(iStartIndex);
+     }
+     return retWire[0];
+
 }
 
 int ofst_wires_extractor::search_loop() {
@@ -309,9 +335,11 @@ int ofst_wires_extractor::search_loop() {
             } else {
                 return 0;
             }
-        } else {
+        } 
+        else {
             int lastConnectionId = this->mSegments[this->mWorkingWire[this->mNumSegmentsInWorkWire - 1]]->get_end_connectionId();
-            for(int i = 0; i < this->mNumSegmentsInWorkWire && startIndex < 0; ++i) {
+            for(int i = 0; i < this->mNumSegmentsInWorkWire && startIndex < 0; ++i) 
+            {
                 if(this->mSegments[this->mWorkingWire[i]]->get_start_connectionId() == lastConnectionId) startIndex = i;
             }
         }
@@ -334,9 +362,10 @@ void ofst_wires_extractor::mark_segment(const int iSegIndex, const int iFlag) {
     if(seg) seg->set_user_flag(iFlag);
 }
 void ofst_wires_extractor::add_last_segment(const int iSegIndex) {
-    if(iSegIndex >= 0) {
-        this->mark_segment(iSegIndex, 1);
-        this->mWorkingWire[this->mNumSegmentsInWorkWire++] = iSegIndex;
+    if(iSegIndex >= 0) 
+    {
+        this->mark_segment(iSegIndex, 1);//将segment_list[iSegIndex]的user_flag设置成1，表示正在处理
+        this->mWorkingWire[this->mNumSegmentsInWorkWire++] = iSegIndex;//将正在处理的segment设置为索引index，this->mNumSegmentsInWorkWire+1，
     }
 }
 void ofst_wires_extractor::store_main_segments_connectionId(const int iStartIndex) {
@@ -359,7 +388,7 @@ int ofst_wires_extractor::is_coonectionId_in_main_loop(const int iCheckId) {
     }
     return connectionIdFound;
 }
-int ofst_wires_extractor::is_wire_connect_to_main_segments(const int iStartIndex) {
+int ofst_wires_extractor::is_wire_connect_to_main_segments(int iStartIndex) {
     int connected = 0;
     if(this->mMainSegmentsConnectionId) {
         offset_segment* crrSeg = nullptr;
@@ -368,7 +397,7 @@ int ofst_wires_extractor::is_wire_connect_to_main_segments(const int iStartIndex
             /*if(!crrSeg) _wassert(L"crrSeg", L"E:\\build\\acis\\NTSwin_b64_debug\\SPAofst\\offset_sg_husk_cur_off.m\\src\\ofst_wires_extractor.cpp", 0x1C5u);*/
             int start_connectionId = crrSeg->get_start_connectionId();
             connected = this->is_coonectionId_in_main_loop(start_connectionId);
-            //++iStartIndex;
+            ++iStartIndex;
         }
         if(!connected && crrSeg) {
             int end_connectionId = crrSeg->get_end_connectionId();

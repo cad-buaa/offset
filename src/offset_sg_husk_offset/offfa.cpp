@@ -83,13 +83,13 @@ class breakpoint_callback : public ACIS_OBJECT {
 int check_failed_full_surface(FACE* face_copy, surface* offset_geom, SPAbox& face_box, SPApar_box& face_pb) {
     SPAinterval face_urange = face_pb.u_range();
     SPAinterval face_vrange = face_pb.v_range();
-    unsigned int failed_full_surface = 0;
+    int failed_full_surface = 0;
     SURFACE* original_surf = face_copy->geometry();
     SPApar_box pb_old = original_surf->equation().param_range(face_box);
     SPApar_box pb_offs = offset_geom->param_range();
     SPAinterval offs_urange = pb_offs.u_range();
     SPAinterval offs_vrange = pb_offs.v_range();
-    if(pb_old.u_range().length() - double(SPAresnor) > offs_urange.length() && !offset_geom->closed_u()) {
+    if(pb_old.u_range().length() - SPAresnor > offs_urange.length() && !offset_geom->closed_u()) {
         if(offs_urange.bounded_below()) {
             double started = offs_urange.start_pt();
             failed_full_surface = started > face_urange.start_pt() + 10.0 * SPAresnor;
@@ -108,7 +108,7 @@ int check_failed_full_surface(FACE* face_copy, surface* offset_geom, SPAbox& fac
         }
         if(offs_vrange.bounded_above()) {
             if(face_vrange.end_pt() - 10.0 * SPAresnor > offs_vrange.end_pt()) {
-                failed_full_surface = 1;
+                return 1;
             }
         }
     }
@@ -222,26 +222,26 @@ bool check_if_face_is_full_surface(FACE* original_face, SURFACE* original_SUR, s
     AcisVersion vt2 = AcisVersion(25, 0, 0);
     AcisVersion vt1 = GET_ALGORITHMIC_VERSION();
     if(vt1 <= vt2) {
-        return NULL;
+        return 0;
     }
     // const surface& v5 = original_SUR->equation();
     if(!SUR_is_spline(original_SUR->equation()) || !SUR_is_spline(*offset_geom)) {
-        return NULL;
+        return 0;
     }
     // const surface& v28 = original_SUR->equation();
     SPApar_box sf_pb = original_SUR->equation().param_range();
     ENTITY_LIST edges;
     get_edges(original_face, edges, PAT_CAN_CREATE);
     if(edges.iteration_count() == 4) {
-        bool retval = TRUE;
+        int retval = 1;
         EDGE* tmped;
         for(tmped = (EDGE*)edges.first(); tmped; tmped = (EDGE*)edges.next()) {
             COEDGE* tmpcoed = tmped->coedge();
             if(!tmpcoed->geometry()) {
-                sg_add_pcurve_to_coedge(tmpcoed, 0, bndy_unknown, 0, 1);
+                sg_add_pcurve_to_coedge((TCOEDGE*)tmpcoed, 0, bndy_unknown, 0, 1);
             }
             if(!tmpcoed->geometry()) {
-                retval = FALSE;
+                retval = 0;
                 break;
             }
             double b = tmped->get_tolerance();
@@ -251,48 +251,43 @@ bool check_if_face_is_full_surface(FACE* original_face, SURFACE* original_SUR, s
                 tol = SPAresabs;
             }
             SPAunit_vector ed_tan = edge_mid_dir(tmped);
-            SPAunit_vector ed_norm = edge_mid_norm(tmped, SPAtransf(), original_face);
+            SPAunit_vector ed_norm = edge_mid_norm(tmped, SPAtransf(), original_face);//不确
             SPAvector ed_cross = tol * (ed_tan * ed_norm);
             SPAposition pos;
-            //`vector constructor iterator'(dpos, 0x18ui64, 2ui64, (void *(__fastcall *)(void *))SPAvector::SPAvector); param = v28->param;
+            //`vector constructor iterator'(dpos, 0x18ui64, 2ui64, (void *(__fastcall *)(void *))SPAvector::SPAvector); 
+
             SPAvector dpos[2];
             SPApar_pos uv = original_SUR->equation().param(edge_mid_pos(tmped));
-            original_SUR->equation().eval(uv, pos, dpos, NULL);
-            SPApar_vec pvec = invert_vec(ed_cross, dpos, NULL);
+            original_SUR->equation().eval(uv, pos, dpos);
+            SPApar_vec pvec = invert_vec(ed_cross, dpos,nullptr);
             // iso_val = *(double*)& parallel_get_tolerance::`vftable'[1];
-            double iso_val = 100;
+            double iso_val = INFINITY;
             pcurve temp_pcurve = tmpcoed->geometry()->equation(1);
             if(spline_isoparam((surface*)(&original_SUR->equation()), &temp_pcurve, 0, &iso_val, tol)) {
-                double ptol = fabs(pvec.du);
+                double ptol = fabs(pvec.du.operator double());
                 double started = sf_pb.u_range().start_pt();
                 if(fabs(iso_val - started) > ptol) {
-                    if(fabs(iso_val - sf_pb.u_range().end_pt()) > ptol) {
-                        retval = FALSE;
-                        // temp_pcurve.~pcurve();
-                        break;
+                    if(fabs(iso_val - sf_pb.u_range().end_pt()) > ptol) {                 
+                    goto LABEL_18;
                     }
                 }
             } else {
                 if(!spline_isoparam((surface*)(&original_SUR->equation()), &temp_pcurve, 1, &iso_val, tol)) {
-                    retval = FALSE;
-                    // temp_pcurve.~pcurve();
-                    break;
+                    goto LABEL_18;
                 }
-                if(fabs(iso_val - sf_pb.v_range().start_pt()) > fabs(pvec.dv)) {
+                if(fabs(iso_val - sf_pb.v_range().start_pt()) > fabs(pvec.dv.operator double())) {
                     if(fabs(iso_val - sf_pb.v_range().end_pt()) > fabs(pvec.dv)) {
-                        retval = FALSE;
-                        // temp_pcurve.~pcurve();
+                    LABEL_18:
+                        retval = 0;
                         break;
                     }
                 }
-            }
-            // temp_pcurve.~pcurve();
+            };
         }
-        // edges.~ENTITY_LIST();
         return retval;
-    } else {
-        // edges.~ENTITY_LIST();
-        return FALSE;
+    } 
+    else {
+        return 0;
     }
 }
 

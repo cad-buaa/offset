@@ -24,18 +24,18 @@ void release_intersection_data(curve_curve_int* mIntsectData) {
     }
 }
 int extend_offset_int_cur(curve* mCrvGeom, SPAinterval& newInterval) {
-    return NULL;
-    // int extOk = 0;
 
-    // offset_int_cur* ofstIntcur = ((offset_int_cur*)mCrvGeom)->get_int_cur();  //
-    // if(ofstIntcur) {
-    //     SPAinterval retIntval = ofstIntcur->extend(newInterval);
-    //     if(retIntval == newInterval) {
-    //         mCrvGeom->change_event();
-    //         return 1;
-    //     }
-    // }
-    // return extOk;
+     int extOk = 0;
+
+     offset_int_cur& ofstIntcur = (offset_int_cur&)((intcurve*)mCrvGeom)->get_int_cur();  
+     if(&ofstIntcur) {
+         SPAinterval retIntval = ofstIntcur.extend(newInterval);
+         if(retIntval == newInterval) {
+             mCrvGeom->change_event();
+             return 1;
+         }
+     }
+     return extOk;
 }
 int extend_curve_geom(curve* mCrvGeom, const double iExtParamLen, const int mCurve1AtStart) {
     const void* v4;        // rax

@@ -24,8 +24,8 @@
 
 // ************************************************************
 outcome gme_api_make_cuboid(double width, double depth, double height, BODY*& body) {
-    DEBUG_LEVEL(DEBUG_CALLS)                               // debug等级
-    fprintf(debug_file_ptr, "calling api_make_cuboid\n");  // debug日志。通过debug_file_ptr记录日志
+    //DEBUG_LEVEL(DEBUG_CALLS)                               // debug等级
+    //fprintf(debug_file_ptr, "calling api_make_cuboid\n");  // debug日志。通过debug_file_ptr记录日志
 
     // API_BEGIN与API_END是ACIS的错误处理机制，函数主体逻辑应该包含于其中。ACIS文档链接：https://doc.spatial.com/get_doc_page/articles/a/p/i/API_Macros_b22b.html
     API_BEGIN
@@ -41,8 +41,8 @@ outcome gme_api_make_cuboid(double width, double depth, double height, BODY*& bo
 
     result = outcome(body == NULL ? API_FAILED : 0);  // 错误处理，在不同情况下可以自定义构造不同的outcome值
     API_END
-    DEBUG_LEVEL(DEBUG_FLOW) {
-        fprintf(debug_file_ptr, "leaving api_make_cuboid : % s\n", find_err_ident(result.error_number()));
-    }
+    //DEBUG_LEVEL(DEBUG_FLOW) {
+    //    fprintf(debug_file_ptr, "leaving api_make_cuboid : % s\n", find_err_ident(result.error_number()));
+    //}
     return result;
 }

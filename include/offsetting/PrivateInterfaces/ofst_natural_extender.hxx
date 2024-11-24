@@ -8,7 +8,7 @@ class offset_segment_list;
 class law;
 
 void release_intersection_data(curve_curve_int* mIntsectData);
-int extend_offset_int_cur(curve* mCrvGeom, SPAinterval& newInterval);  // 暂未实现
+int extend_offset_int_cur(curve* mCrvGeom, SPAinterval& newInterval);  // 暂有不懂，已检查
 int extend_curve_geom(curve* mCrvGeom, const double iExtParamLen, const int mCurve1AtStart);
 void debug_display_natural_extender(COEDGE* iCoedge1, COEDGE* iCoedge2, curve_curve_int* iIntersections, curve* iCurve1, curve* iCurve2);
 int comp_curve_end_info(curve* iCurve, SPAposition& iEndPos, SPAvector& oEndTangent);

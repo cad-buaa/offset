@@ -177,11 +177,15 @@ if("${TARGET_SOURCE_FILES}" STREQUAL "")
 else()
     # 在当前目录下创建了一个名为 MODULE_TARGET_NAME 的动态库目标，使用之前获取的头文件与源文件
     add_library(${MODULE_TARGET_NAME} SHARED ${TARGET_HEADER_FILES}
-                                             ${TARGET_SOURCE_FILES} "src/offset_sg_husk_cur_off/off_misc.cpp" "src/offset_sg_husk_cur_off/ofst_wires_extractor.cpp" "src/offset_sg_husk_cur_off/at_rel.cpp" "src/offset_sg_husk_cur_off/ofst_trim_util.cpp") # 添加链接库输出
+                                             ${TARGET_SOURCE_FILES}) # 添加链接库输出
 
     # 为刚创建的动态库设置FOLDER属性，这个动态库被放置在项目中以 PROPERTY_PREFIX 命名的文件夹下
     set_property(TARGET ${MODULE_TARGET_NAME} PROPERTY FOLDER
                                                        ${PROPERTY_PREFIX})
+
+    target_compile_definitions(${MODULE_TARGET_NAME} PRIVATE __offset)
+
+    target_compile_definitions(${MODULE_TARGET_NAME} PRIVATE SPA_DEBUG)
 
     # ACIS target_include_acis(${MODULE_TARGET_NAME})
     target_include_directories(

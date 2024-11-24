@@ -9,9 +9,10 @@
 #include "acis/strdef.hxx"
 
 // 已检查
-class ofst_edge_smooth_manager {
-  public:
-    ofst_edge_smooth_manager();
+class ofst_edge_smooth_manager : ACIS_OBJECT 
+{
+public:
+    ofst_edge_smooth_manager();//已检查
     ~ofst_edge_smooth_manager();
     int init(ENTITY_LIST* iEdges, int iMaxSmoothLevel, int iMaxIteration);
     int get_edge_smooth_level(EDGE* iEdge, int oRemoceContainment);
@@ -36,9 +37,9 @@ class ofst_edge_smooth_manager {
     int* mNumIntersections;
     int* mNumOverlaps;
 };
-
-BODY* sg_offset_planar_wire_internal(WIRE* wire, TRANSFORM* wire_transf, law* dist_law, law* twist_law, SPAunit_vector& wire_normal, sg_gap_type close_type, int add_attribs, int trim, int zero_length, int overlap, int iKeepMiniTopo,
-                                     ofst_edge_smooth_manager* iEdgeSmoothMgr);  // 暂未实现
+//
+//BODY* sg_offset_planar_wire_internal(WIRE* wire, TRANSFORM* wire_transf, law* dist_law, law* twist_law, SPAunit_vector& wire_normal, sg_gap_type close_type, int add_attribs, int trim, int zero_length, int overlap, int iKeepMiniTopo,
+//                                     ofst_edge_smooth_manager* iEdgeSmoothMgr);  // 暂未实现
 
 bs3_curve_def* smooth_bs3_curve(bs3_curve_def*& iBs3Curve, SPAinterval& iParamRange, double iFitTolerance, int iLevel);
 

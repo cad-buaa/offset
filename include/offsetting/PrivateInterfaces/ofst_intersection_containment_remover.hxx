@@ -6,9 +6,9 @@
 #include "acis/sgcofrtn.hxx"
 
 void display_segment_intersection_points(EDGE* iOfstEdge, curve_curve_int* iIntersections, EDGE* iOfstEdge2);    //已检查  调试                                                                         // 暂未实现
-int sg_intersect_rate_segments(offset_segment_list* iSegList, offset_segment* s1, offset_segment* s2, law* dist_law, SPAunit_vector& normal, sg_gap_type use_type, int& ioConnectionId);  // 暂未实现
+int sg_intersect_rate_segments(offset_segment_list* iSegList, offset_segment* s1, offset_segment* s2, law* dist_law, SPAunit_vector& normal, sg_gap_type use_type, int& ioConnectionId);  // 已检查！
 int coedge_connected(COEDGE* iCoedge1, COEDGE* iCoedge2);
-int is_first_intersect_contains_all(curve_curve_int* ioIntersections, double iHalfParamRange);
+int is_first_intersect_contains_all(curve_curve_int* ioIntersections, double iHalfParamRange);//已检查
 void remove_intersections_containing_exactly_one_cusp(curve_curve_int*& intersectionsList, curve_curve_int* cuspsList, COEDGE* coed);  // 暂未实现
 int contains_exactly_one_cusp(curve_curve_int* the_inter, SPAdouble_array& cusps, int& which);
 int cci_contains_par(curve_curve_int* the_inter, double par);

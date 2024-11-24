@@ -78,14 +78,14 @@ class offset_segment : public ACIS_OBJECT {
     void get_init_params(double& iSParam, double& iEParam);
     void set_init_params(double iSParam, double iEParam);
     void comp_cusp_points(curve_curve_int*& ioList, law* iDistLaw, SPAunit_vector& iNormal, int use_high_curv_func);  // 暂未实现
-    void split_and_rate_new(curve_curve_int*& ioIntersections, int& ioStartConnectionId, double iHalfParamRange, int iSingleSegment);
+    void split_and_rate_new(curve_curve_int*& ioIntersections, int& ioStartConnectionId, double iHalfParamRange, int iSingleSegment);//已检查！
 
     offset_segment* next_segment;
     offset_segment* prev_segment;
-    int start_is_out;
-    int end_is_out;
-    int seg_reversed;
-    int is_singular;
+    int start_is_out;//
+    int end_is_out;//
+    int seg_reversed;//偏置段是否反向
+    int is_singular;//
     int mMayHaveSelfIntersections;
     int is_extension;
     int mStartConnectId;
@@ -102,7 +102,7 @@ class offset_segment : public ACIS_OBJECT {
 };
 class offset_segment_list : public ACIS_OBJECT {
   public:
-    offset_segment_list(law* dist, SPAunit_vector& normal, int add_attribs, sg_gap_type use_type, int iNonPlanar);
+    offset_segment_list(law* dist,const SPAunit_vector& normal, int add_attribs, sg_gap_type use_type, int iNonPlanar);//已检查
     offset_segment_list();
     law* distance();
     WIRE* get_base_wire();
@@ -117,11 +117,11 @@ class offset_segment_list : public ACIS_OBJECT {
     offset_segment* first_segment();
     offset_segment* last_segment();
     void set_distance(law* d);           // 已检查
-    void set_normal(SPAunit_vector& v);  // 已检查
+    void set_normal(const SPAunit_vector& v);  // 已检查
     void set_add_attribs(int l);         // 已检查
     void close_segments();
 
-    int add_segment(offset_segment* new_segment, RenderingObject* pRO);  // 暂未实现
+    int add_segment(offset_segment* new_segment, RenderingObject* pRO);  // 暂未实现,=不确定
     void insert_segment(offset_segment* seg_to_insert, offset_segment* key_seg);
     void remove_segment(offset_segment* seg);
     void print(_iobuf* dfp);
@@ -137,22 +137,22 @@ class offset_segment_list : public ACIS_OBJECT {
     int segments_connected();
     void add_connection_after_split(offset_segment* iStartSegment1, offset_segment* iStartSegment2);
 
-    int mSelfIntesectError;
-    law* dist_law;
-    SPAunit_vector offset_normal;
-    double mOffsetDist;
-    int add_attributes;
+    int mSelfIntesectError;//值为非0表示存在自交
+    law* dist_law;//定义偏移的距离或法则，可以是常数距离或基于曲线长度的变化法则。
+    SPAunit_vector offset_normal;//偏移平面的法向量，不确定
+    double mOffsetDist;//偏移距离
+    int add_attributes;//添加属性的标志
     sg_gap_type close_type;
     WIRE* mBaseWire;
-    int mNumberOfOffsetCoedges;
-    int mTrimInsideWireDone;
+    int mNumberOfOffsetCoedges;//偏移共边的数量。
+    int mTrimInsideWireDone;//标记是否完成了线框的内部裁剪
     int mNonPlanar;
     offset_segment head_node;
     offset_segment tail_node;
-    int count;
-    int mLastSegmentConnectionId;
+    int count;//偏移段计数
+    int mLastSegmentConnectionId;//记录最后一个偏移段的连接 ID，用于管理和检测偏移段之间的连接状态,不确定
     int mStartSegmentConnectionId;
-    ofst_edge_smooth_manager* mEdgeSmoothMgr;
+    ofst_edge_smooth_manager* mEdgeSmoothMgr;//用于管理偏移段列表中边界的平滑度，确保偏移段之间的平滑过渡
 };
 
 class offset_int_cur : public int_cur {
@@ -164,8 +164,9 @@ class offset_int_cur : public int_cur {
     offset_int_cur(curve& orig_spline, SPAinterval& c_range, bs3_curve_def* c, double fit_tol, SPAunit_vector& curve_normal, law* inlaw_dist, law* inlaw_twist);
     offset_int_cur(curve& orig_spline, SPAinterval& c_range, bs3_curve_def* c, double fit_tol, SPAunit_vector& off_dir, SPAunit_vector& curve_normal, law* inlaw_dist, law* inlaw_twist);
     offset_int_cur();
+
     const curve& get_orig_curve() const;
-    SPAinterval extend(SPAinterval& iNewRange);
+    SPAinterval extend(const SPAinterval& iNewRange);
     static int id();
 };
 
@@ -174,11 +175,12 @@ int check_analytical_curve_offset_on_cone(COEDGE* coed, surface* offsurf);
 curve* make_offset_curve_from_pcurve(COEDGE* pCoedge, surface& rOffsetSurface);
 void sg_approx(COEDGE* in_coedge, bs2_curve_def*& coedge_approx_result, SPA_internal_approx_options& approxOpts);
 
-COEDGE* sg_offset_pl_coedge(COEDGE* c, law* dist_law, law* twist_law, SPAunit_vector& n);                                                  // 已检查
+//curve* offset_geometry(curve const* geometry, SPAunit_vector const& in_normal, law* dist_law, law* twist_law, SPAinterval const& in_off_domain);
+COEDGE* sg_offset_pl_coedge(COEDGE* c, law* dist_law, law* twist_law,const SPAunit_vector& n);                                                  // 已检查
 bs3_curve_def* bs3_curve_snap_end_curvatures(bs3_curve_def* crv, const SPAvector& start_crv, const SPAvector& end_crv, double smoothing);  // 别的模块
 // void  bs3_curve_compat(bs3_curve_def* b1, bs3_curve_def* b2);//陆
 double bs3_cpt_dist(bs3_curve_def* bs3_0, bs3_curve_def* bs3_1);                               // 别的模块
-int make_tvertex(COEDGE* c, int start);                                                        // 陆
+                                           
 curve_curve_int* remove_intersection(curve_curve_int* head_cci, curve_curve_int* remove_cci);  // 别的模块
 
 #endif
