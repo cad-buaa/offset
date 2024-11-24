@@ -2,6 +2,7 @@
 #include "ProtectedInterfaces/offsetsf.hxx"
 #include "ProtectedInterfaces/ofsttools.hxx"
 #include "ProtectedInterfaces/sgoffrtn_prot.hxx"
+#include "PublicInterfaces/gme_sgoffrtn.hxx"
 #include "acis/DSYWarningManager.h"
 #include "acis/SPA_approx_options.hxx"
 #include "acis/SPA_edge_line_arc_options.hxx"
@@ -440,6 +441,54 @@ int use_pcurve_for_curve_offset(COEDGE* coed, surface* offsurf) {
         }
     }
     return use_pcurve;
+}
+
+logical gme_sg_at_apex(const SPAposition& test_pos, const surface* surf) {
+    if(surf->type() != cone_type) {
+        return 0;
+    }
+    const cone* myCone = static_cast<const cone*>(surf);
+    if(myCone->cylinder() || !myCone->circular()) {
+        return 0;
+    }
+    SPAvector result = test_pos - myCone->base.centre;
+    SPAvector v7 = result * myCone->base.normal;
+    double v5 = v7.len();
+    return (SPAresabs > v5);
+}
+
+SPAposition gme_sg_offset_pos(const SPAposition& original_pos, const surface* surf, double offset_distance) {
+    if(SPAresabs > fabs(offset_distance)) {
+        SPAposition result(original_pos);
+        return result;
+    }
+    if (surf->type() != cone_type)
+    {
+        SPAunit_vector surf_normal = surf->point_outdir(original_pos);
+        SPAposition result(original_pos + (surf_normal * offset_distance));
+        return result;
+    }
+    const cone* myCone = static_cast<const cone*>(surf);
+    if(!myCone->circular() || myCone->cylinder() || !gme_sg_at_apex(original_pos, surf)) {
+        if(!myCone->circular() && !myCone->cylinder()) {
+            same_point(myCone->get_apex(), original_pos);
+        }
+        SPAunit_vector surf_normal = surf->point_outdir(original_pos);
+        SPAposition result(original_pos + (surf_normal * offset_distance));
+        return result;
+    }
+    ellipse base(myCone->base);
+    SPAunit_vector cone_normal = myCone->point_normal((base.centre + base.major_axis));
+    SPAposition apex = base.centre + (base.normal * (-base.major_axis.len() * myCone->cosine_angle / myCone->sine_angle));
+    if(myCone->hollow() == offset_distance < 0.0) {
+        SPAvector offset_vec = cone_normal * offset_distance;
+        SPAposition result(apex + offset_vec);
+        return result;
+    } else {
+        SPAvector v24 = base.normal * (offset_distance / myCone->sine_angle);
+        SPAposition result(apex - v24);
+        return result;
+    }
 }
 
 int check_analytical_curve_offset_on_cone(COEDGE* coed, surface* offsurf) {

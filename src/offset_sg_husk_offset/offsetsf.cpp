@@ -4,14 +4,18 @@
 #include "ProtectedInterfaces/off_cu.hxx"
 #include "ProtectedInterfaces/ofsttools.hxx"
 #include "ProtectedInterfaces/protlist.hxx"
+#include "PublicInterfaces/gme_sgoffrtn.hxx"
+#include "acis/acismath.h"
 #include "acis/acistype.hxx"
 #include "acis/add_pcu.hxx"
 #include "acis/allsfdef.hxx"
 #include "acis/annotation.hxx"
+#include "acis/base.hxx"
 #include "acis/bcu.hxx"
 #include "acis/blnd_spl.hxx"
 #include "acis/bsf.hxx"
 #include "acis/calctol.hxx"
+#include "acis/chk_stat.hxx"
 #include "acis/ckoutcom.hxx"
 #include "acis/cnstruct.hxx"
 #include "acis/copyanno.hxx"
@@ -20,6 +24,7 @@
 #include "acis/curve.hxx"
 #include "acis/cvc.hxx"
 #include "acis/errorbase.hxx"
+#include "acis/exct_spl.hxx"
 #include "acis/faceutil.hxx"
 #include "acis/geometry.hxx"
 #include "acis/get_top.hxx"
@@ -28,21 +33,27 @@
 #include "acis/kernapi.hxx"
 #include "acis/kernopts.hxx"
 #include "acis/law.hxx"
+#include "acis/lopopts.hxx"
 #include "acis/math.hxx"
 #include "acis/mkoffscur.hxx"
 #include "acis/off_scur.hxx"
+#include "acis/off_spl.hxx"
 #include "acis/offserr_info.hxx"
 #include "acis/par_int.hxx"
 #include "acis/pcurve.hxx"
 #include "acis/point.hxx"
 #include "acis/repedge.hxx"
 #include "acis/rm_pcu.hxx"
+#include "acis/rot_spl.hxx"
 #include "acis/sgapi.err"
-#include "acis/sgoffrtn.hxx"
+#include "acis/sgcofrtn.hxx"
 #include "acis/sgquertn.hxx"
 #include "acis/sliver_ents.hxx"
+#include "acis/sp3srtn.hxx"
+#include "acis/spd3rtn.hxx"
 #include "acis/spline.hxx"
 #include "acis/splsur.err"
+#include "acis/sps3srtn.hxx"
 #include "acis/sur.hxx"
 #include "acis/sur_off.err"
 #include "acis/surf_int.hxx"
@@ -50,18 +61,11 @@
 #include "acis/svc.hxx"
 #include "acis/tolerize_ent.hxx"
 #include "acis/topol.hxx"
-#include "acis/off_spl.hxx"
-#include "acis/exct_spl.hxx"
-#include "acis/acismath.h"
-#include "acis/base.hxx"
-#include "acis/sp3srtn.hxx"
-#include "acis/sgcofrtn.hxx"
-#include "acis/rot_spl.hxx"
 
 extern APIFINDER apiFinderACIS;
 extern PROCSTATE prostate;
 
-
+static int (*test_blend_face_callback)(FACE*, double, ENTITY_LIST&, ENTITY_LIST&, ENTITY_LIST&);  // 来自于blend模块
 
 offset_surface_options::offset_surface_options() {
     this->exact_offset_var_blend = 1;
@@ -468,6 +472,16 @@ int add_pcurve_to_coedge_using_intcurve_pcurve(COEDGE* coedge, int exact, bndy_t
     add_pcurve_to_coedge_using_intcurve_pcurve_type f = (add_pcurve_to_coedge_using_intcurve_pcurve_type)apiFinderACIS.GetAddress("?add_pcurve_to_coedge_using_intcurve_pcurve@@YAHPEAVCOEDGE@@HW4bndy_type@@HPEBVsurface@@@Z", prostate);
     if(f) {
         return f(coedge, exact, bndy_info, reset_pattern, surf);
+    } else {
+        return NULL;
+    }
+}
+
+int sg_smooth_face_at_disc(FACE* face, double pos_tol, double tan_tol, int do_tolerize) {
+    typedef int (*sg_smooth_face_at_disc_type)(FACE* face, double pos_tol, double tan_tol, int do_tolerize);
+    sg_smooth_face_at_disc_type f = (sg_smooth_face_at_disc_type)apiFinderACIS.GetAddress("?sg_smooth_face_at_disc@@YAHPEAVFACE@@NNH@Z", prostate);
+    if(f) {
+        return f(face, pos_tol, tan_tol, do_tolerize);
     } else {
         return NULL;
     }
@@ -1188,8 +1202,7 @@ void standard_offsetter::offset_vertex_pos(VERTEX* vert, SPAposition& sing_pos, 
         }
         const surface& surf = original_surf->equation();
         const SPAposition& test_pos = this_point->coords();
-        // sg_at_apex这个函数后续需自己写，该函数是本模块的
-        if(sg_at_apex(test_pos, &surf)) {
+        if(gme_sg_at_apex(test_pos, &surf)) {
             if(vert->edge()->coedge()->loop()->face()->sense() == 1) {
                 EDGE* ap_edge = vert->edge();
                 if(ap_edge->sense() == 1)
@@ -1276,7 +1289,7 @@ SPAposition standard_offsetter::offset_pos_at_sing(VERTEX* vert, EDGE* edge, dou
 }
 
 SPAposition standard_offsetter::offset_pos(SPAposition& original_pos, surface* surf, surface* offset_surface, SPApar_pos& uv, double offset_distance) {
-    SPAposition Result = sg_offset_pos(original_pos, surf, offset_distance);  // 后续需要自己写，这个函数是OFST模块的
+    SPAposition Result = gme_sg_offset_pos(original_pos, surf, offset_distance);  
     return Result;
 }
 
@@ -1488,68 +1501,67 @@ void standard_offsetter::offset_curve(COEDGE* this_coedge, pcurve& pcu_geom, cur
     }
 }
 
-void add_offset_dist_exceeds_threshold_complexity(FACE* input_face, const double offset_dist, const double threshold)
-{
-    //error_info* v3;                         // rax
-    //aux_data_set* data_set;                 // [rsp+38h] [rbp-100h] BYREF
-    //aux_data_manager data_mgr;              // [rsp+40h] [rbp-F8h] BYREF
-    //int err_mess;                           // [rsp+48h] [rbp-F0h]
-    //error_collator::complexity_source src;  // [rsp+4Ch] [rbp-ECh] BYREF
-    //ENTITY* err_ent;                        // [rsp+50h] [rbp-E8h]
-    //error_info_base* error_info_base_ptr;   // [rsp+58h] [rbp-E0h]
-    //COPY_ANNOTATION* ann;                   // [rsp+60h] [rbp-D8h]
-    //FACE* temp_fc;                          // [rsp+68h] [rbp-D0h]
-    //error_info* v12;                        // [rsp+70h] [rbp-C8h]
-    //error_info* v13;                        // [rsp+78h] [rbp-C0h]
-    //error_info* err_info;                   // [rsp+80h] [rbp-B8h]
-    //ENTITY* ent;                            // [rsp+88h] [rbp-B0h]
-    //ATTRIB_TAG* oet;                        // [rsp+90h] [rbp-A8h]
-    //error_info* v17;                        // [rsp+98h] [rbp-A0h]
-    //long double elem;                       // [rsp+A0h] [rbp-98h] BYREF
-    //long double v19;                        // [rsp+A8h] [rbp-90h] BYREF
-    //error_collator* v20;                    // [rsp+B0h] [rbp-88h]
-    //exception_save exception_save_mark;     // [rsp+B8h] [rbp-80h] BYREF
-    //acis_exception error_info_holder;       // [rsp+C8h] [rbp-70h] BYREF
+void add_offset_dist_exceeds_threshold_complexity(FACE* input_face, const double offset_dist, const double threshold) {
+    // error_info* v3;                         // rax
+    // aux_data_set* data_set;                 // [rsp+38h] [rbp-100h] BYREF
+    // aux_data_manager data_mgr;              // [rsp+40h] [rbp-F8h] BYREF
+    // int err_mess;                           // [rsp+48h] [rbp-F0h]
+    // error_collator::complexity_source src;  // [rsp+4Ch] [rbp-ECh] BYREF
+    // ENTITY* err_ent;                        // [rsp+50h] [rbp-E8h]
+    // error_info_base* error_info_base_ptr;   // [rsp+58h] [rbp-E0h]
+    // COPY_ANNOTATION* ann;                   // [rsp+60h] [rbp-D8h]
+    // FACE* temp_fc;                          // [rsp+68h] [rbp-D0h]
+    // error_info* v12;                        // [rsp+70h] [rbp-C8h]
+    // error_info* v13;                        // [rsp+78h] [rbp-C0h]
+    // error_info* err_info;                   // [rsp+80h] [rbp-B8h]
+    // ENTITY* ent;                            // [rsp+88h] [rbp-B0h]
+    // ATTRIB_TAG* oet;                        // [rsp+90h] [rbp-A8h]
+    // error_info* v17;                        // [rsp+98h] [rbp-A0h]
+    // long double elem;                       // [rsp+A0h] [rbp-98h] BYREF
+    // long double v19;                        // [rsp+A8h] [rbp-90h] BYREF
+    // error_collator* v20;                    // [rsp+B0h] [rbp-88h]
+    // exception_save exception_save_mark;     // [rsp+B8h] [rbp-80h] BYREF
+    // acis_exception error_info_holder;       // [rsp+C8h] [rbp-70h] BYREF
 
-    //if(error_collator::instance()) {
-    //    acis_exception::acis_exception(&error_info_holder, 0, 0i64, 0i64, 0);
-    //    error_info_base_ptr = 0i64;
-    //    exception_save::exception_save(&exception_save_mark);
-    //    exception_save::begin(&exception_save_mark);
-    //    get_error_mark()->buffer_init = 1;
-    //    err_ent = input_face;
-    //    ent = 0i64;
-    //    ann = (COPY_ANNOTATION*)find_annotation(input_face, is_COPY_ANNOTATION, "source", 0i64);
-    //    if(ann) {
-    //        oet = (ATTRIB_TAG*)COPY_ANNOTATION::source(ann);
-    //        temp_fc = (FACE*)ATTRIB_TAG::origin(oet);
-    //        if(temp_fc != input_face) err_ent = temp_fc;
-    //    }
-    //    v12 = (error_info*)ACIS_OBJECT::operator new(0x38ui64, eDefault, "E:\\build\\acis\\NTSwin_b64_debug\\SPAofst\\offset_sg_husk_offset.m\\src\\offsetsf.cpp", 493, &alloc_file_index_3526);
-    //    if(v12) {
-    //        err_mess = message_module::message_code(&spaacisds_offset_errmod, 7);
-    //        error_info::error_info(v12, err_mess, SPA_OUTCOME_PROBLEM, err_ent, 0i64, 0i64);
-    //        v13 = v3;
-    //    } else {
-    //        v13 = 0i64;
-    //    }
-    //    v17 = v13;
-    //    err_info = v13;
-    //    aux_data_manager::aux_data_manager(&data_mgr, v13);
-    //    data_set = 0i64;
-    //    aux_data_manager::make_data_set(&data_mgr, err_ent, "Owner face", &data_set);
-    //    elem = fabs(offset_dist);
-    //    aux_data_manager::make_data_set(&data_mgr, &elem, "Offset Distance", &data_set);
-    //    v19 = fabs(threshold);
-    //    aux_data_manager::make_data_set(&data_mgr, &v19, "Threshold Offset Distance", &data_set);
-    //    aux_data_manager::add_data_set(&data_mgr, "Offset Details", data_set);
-    //    v20 = error_collator::instance();
-    //    src = COMPLEXITY_INPUT;
-    //    error_collator::note_complexity(v20, err_info, &src);
-    //    exception_save::~exception_save(&exception_save_mark);
-    //    if(acis_interrupted()) sys_error(0, error_info_base_ptr);
-    //    acis_exception::~acis_exception(&error_info_holder);
-    //}
+    // if(error_collator::instance()) {
+    //     acis_exception::acis_exception(&error_info_holder, 0, 0i64, 0i64, 0);
+    //     error_info_base_ptr = 0i64;
+    //     exception_save::exception_save(&exception_save_mark);
+    //     exception_save::begin(&exception_save_mark);
+    //     get_error_mark()->buffer_init = 1;
+    //     err_ent = input_face;
+    //     ent = 0i64;
+    //     ann = (COPY_ANNOTATION*)find_annotation(input_face, is_COPY_ANNOTATION, "source", 0i64);
+    //     if(ann) {
+    //         oet = (ATTRIB_TAG*)COPY_ANNOTATION::source(ann);
+    //         temp_fc = (FACE*)ATTRIB_TAG::origin(oet);
+    //         if(temp_fc != input_face) err_ent = temp_fc;
+    //     }
+    //     v12 = (error_info*)ACIS_OBJECT::operator new(0x38ui64, eDefault, "E:\\build\\acis\\NTSwin_b64_debug\\SPAofst\\offset_sg_husk_offset.m\\src\\offsetsf.cpp", 493, &alloc_file_index_3526);
+    //     if(v12) {
+    //         err_mess = message_module::message_code(&spaacisds_offset_errmod, 7);
+    //         error_info::error_info(v12, err_mess, SPA_OUTCOME_PROBLEM, err_ent, 0i64, 0i64);
+    //         v13 = v3;
+    //     } else {
+    //         v13 = 0i64;
+    //     }
+    //     v17 = v13;
+    //     err_info = v13;
+    //     aux_data_manager::aux_data_manager(&data_mgr, v13);
+    //     data_set = 0i64;
+    //     aux_data_manager::make_data_set(&data_mgr, err_ent, "Owner face", &data_set);
+    //     elem = fabs(offset_dist);
+    //     aux_data_manager::make_data_set(&data_mgr, &elem, "Offset Distance", &data_set);
+    //     v19 = fabs(threshold);
+    //     aux_data_manager::make_data_set(&data_mgr, &v19, "Threshold Offset Distance", &data_set);
+    //     aux_data_manager::add_data_set(&data_mgr, "Offset Details", data_set);
+    //     v20 = error_collator::instance();
+    //     src = COMPLEXITY_INPUT;
+    //     error_collator::note_complexity(v20, err_info, &src);
+    //     exception_save::~exception_save(&exception_save_mark);
+    //     if(acis_interrupted()) sys_error(0, error_info_base_ptr);
+    //     acis_exception::~acis_exception(&error_info_holder);
+    // }
 }
 
 surface* offset_plane(plane* original_plane, double offset_distance) {
@@ -1561,27 +1573,23 @@ surface* offset_plane(plane* original_plane, double offset_distance) {
     return offs_plane;
 }
 
-cone* offset_regular_cylinder(cone& original_cone, const double& offset_distance, error_info*& err, FACE* in_face, int& did_adaptive)
-{
+cone* offset_regular_cylinder(cone& original_cone, const double& offset_distance, error_info*& err, FACE* in_face, int& did_adaptive) {
     double old_rad = original_cone.base.major_axis.len();
     double v12;
     if(original_cone.hollow())
         v12 = old_rad - offset_distance;
     else
         v12 = old_rad + offset_distance;
-    if(did_adaptive && SPAresfit > v12 || SPAresabs > v12) 
-    {
+    if(did_adaptive && SPAresfit > v12 || SPAresabs > v12) {
         double vval = original_cone.param_range_v().start_pt();
         double uval = original_cone.param_range_u().start_pt();
         SPApar_pos uv_fail(uval, vval);
-        if(err) 
-        {
+        if(err) {
             err = ACIS_NEW curvature_error_info(&uv_fail, 1, offset_distance, (ENTITY*)0, old_rad);
         }
         AcisVersion vt2 = AcisVersion(33, 0, 0);
         AcisVersion vt1 = GET_ALGORITHMIC_VERSION();
-        if (vt1 > vt2)
-        {
+        if(vt1 > vt2) {
             add_offset_dist_exceeds_threshold_complexity(in_face, offset_distance, old_rad);
         }
         return nullptr;
@@ -1593,16 +1601,14 @@ cone* offset_regular_cylinder(cone& original_cone, const double& offset_distance
     }
 }
 
-cone* offset_regular_cone(cone& original_cone, const double& offset_distance, error_info*& err, FACE* in_face)
-{
+cone* offset_regular_cone(cone& original_cone, const double& offset_distance, error_info*& err, FACE* in_face) {
     cone* offs_cone = nullptr;
     double sine_angle = original_cone.sine_angle;
     double d = offset_distance;
     SPAvector v = -original_cone.base.normal;
     SPAvector shift = (v * d) * sine_angle;
     SPAvector new_major_axis = original_cone.base.major_axis + ((offset_distance * original_cone.cosine_angle) * normalise(original_cone.base.major_axis));
-    if (original_cone.cosine_angle * offset_distance >= 0.0)
-    {
+    if(original_cone.cosine_angle * offset_distance >= 0.0) {
         SPAposition cen = original_cone.base.centre + shift;
         double u_scale = original_cone.u_param_scale;
         double cos_ang = original_cone.cosine_angle;
@@ -1614,19 +1620,17 @@ cone* offset_regular_cone(cone& original_cone, const double& offset_distance, er
     AcisVersion cav = GET_ALGORITHMIC_VERSION();
     int same_polarity = original_cone.cosine_angle > 0.0 && original_cone.sine_angle > 0.0;
     int zero_length = (SPAresabs * SPAresabs) > (new_major_axis % new_major_axis);
-    if(zero_length || (new_major_axis % original_cone.base.major_axis) < 0.0) 
-    {
+    if(zero_length || (new_major_axis % original_cone.base.major_axis) < 0.0) {
         int proceed = !(cav > AcisVersion(22, 0, 0)) || zero_length || same_polarity == 0;
         if(proceed) {
             double vval = original_cone.param_range_v().start_pt();
             double uval = original_cone.param_range_u().start_pt();
             SPApar_pos uv_fail(uval, vval);
-            if(err) 
-            {
+            if(err) {
                 double rad_crv = fabs(original_cone.base.major_axis.len() / original_cone.cosine_angle);
                 err = ACIS_NEW curvature_error_info(&uv_fail, 1, offset_distance, (ENTITY*)0, rad_crv);
             }
-            /*if(cav > AcisVersion(33, 0, 0)) 
+            /*if(cav > AcisVersion(33, 0, 0))
             {
                 threshold = SPAvector::len(&original_cone->base.major_axis) / original_cone->cosine_angle;
                 offset_dist = *offset_distance;
@@ -1636,8 +1640,7 @@ cone* offset_regular_cone(cone& original_cone, const double& offset_distance, er
         }
     }
     SPAinterval u_range = original_cone.param_range_u();
-    if (!u_range.finite())
-    {
+    if(!u_range.finite()) {
         SPAposition cen = original_cone.base.centre + shift;
         double u_scale = original_cone.u_param_scale;
         double cos_ang = original_cone.cosine_angle;
@@ -1647,8 +1650,7 @@ cone* offset_regular_cone(cone& original_cone, const double& offset_distance, er
         return offs_cone;
     }
     double u = original_cone.reverse_u ? u_range.start_pt() : u_range.end_pt();
-    if (original_cone.reverse_u != (u > 0.0))
-    {
+    if(original_cone.reverse_u != (u > 0.0)) {
         SPAposition cen = original_cone.base.centre + shift;
         double u_scale = original_cone.u_param_scale;
         double cos_ang = original_cone.cosine_angle;
@@ -1660,10 +1662,8 @@ cone* offset_regular_cone(cone& original_cone, const double& offset_distance, er
     SPAposition pos = original_cone.eval_position(SPApar_pos(u, 0.0));
     SPAvector base_to_pos = pos - original_cone.base.centre;
     double radius_product = base_to_pos % original_cone.base.major_axis;
-    if(radius_product >= 0.0) 
-    {
-        if((SPAresabs * SPAresabs) * (original_cone.base.major_axis % original_cone.base.major_axis) <= (radius_product * radius_product)) 
-        {
+    if(radius_product >= 0.0) {
+        if((SPAresabs * SPAresabs) * (original_cone.base.major_axis % original_cone.base.major_axis) <= (radius_product * radius_product)) {
             SPAposition cen = original_cone.base.centre + shift;
             double u_scale = original_cone.u_param_scale;
             double cos_ang = original_cone.cosine_angle;
@@ -1674,15 +1674,13 @@ cone* offset_regular_cone(cone& original_cone, const double& offset_distance, er
         }
     }
     SPApar_pos uv_param(u, 0.0);
-    if(err) 
-    {
+    if(err) {
         err = ACIS_NEW curvature_error_info(&uv_param, 1, offset_distance);
     }
     return nullptr;
 }
 
-surface* offset_cone(cone* original_cone, SPAbox& region_of_interest, double offset_distance, error_info*& err, FACE* in_face, int __formal, int& did_adaptive)
-{
+surface* offset_cone(cone* original_cone, SPAbox& region_of_interest, double offset_distance, error_info*& err, FACE* in_face, int __formal, int& did_adaptive) {
     error_info* erra = err;
     double offset_distancea = offset_distance;
     if(original_cone->base.radius_ratio == 1.0) {
@@ -1704,7 +1702,7 @@ surface* offset_cone(cone* original_cone, SPAbox& region_of_interest, double off
         started = u_range.end_pt();
     else
         started = u_range.start_pt();
-    
+
     ellipse* min_ellipse = (ellipse*)subset_cone->v_param_line(started);
     double min_rad_curv = 0.0;
     double max_rad_curv = 0.0;
@@ -1722,7 +1720,7 @@ surface* offset_cone(cone* original_cone, SPAbox& region_of_interest, double off
         offset_distancea = offset_distancea;
     else
         offset_distancea = -offset_distancea;
-    
+
     AcisVersion vt2 = AcisVersion(18, 0, 0);
     AcisVersion vt1 = GET_ALGORITHMIC_VERSION();
     int no_offset;
@@ -1777,7 +1775,7 @@ surface* offset_cone(cone* original_cone, SPAbox& region_of_interest, double off
             offset_surf = (surface*)v48;
             if(v44) {
                 ACIS_DELETE v44;
-            } 
+            }
         } else {
             subset_cone->unlimit_v();
             off_spl_sur* splsur = ACIS_NEW off_spl_sur(*subset_cone, offset_distancea);
@@ -1785,7 +1783,7 @@ surface* offset_cone(cone* original_cone, SPAbox& region_of_interest, double off
         }
         if(subset_cone) {
             ACIS_DELETE subset_cone;
-        } 
+        }
         return (cone*)offset_surf;
     }
     SPApar_pos uv_fail(started, 0.0);
@@ -1794,7 +1792,7 @@ surface* offset_cone(cone* original_cone, SPAbox& region_of_interest, double off
     }
     if(subset_cone) {
         ACIS_DELETE subset_cone;
-    } 
+    }
     return nullptr;
 }
 
@@ -1814,28 +1812,22 @@ surface* offset_sphere(sphere* original_sphere, double offset_distance, error_in
     return offs_sphere;
 }
 
-int check_interval_contained_periodic(SPAinterval check_interval, SPAinterval contain_interval, double period)
-{
-    if (check_interval.length() > contain_interval.length())
-    {
+int check_interval_contained_periodic(SPAinterval check_interval, SPAinterval contain_interval, double period) {
+    if(check_interval.length() > contain_interval.length()) {
         return 0;
     }
     while(1) {
         double started = check_interval.start_pt();
-        if(started - contain_interval.start_pt() <= period) 
-        {
-            if (check_interval.end_pt() - contain_interval.end_pt() <= period)
-            {
+        if(started - contain_interval.start_pt() <= period) {
+            if(check_interval.end_pt() - contain_interval.end_pt() <= period) {
                 break;
             }
         }
         check_interval -= period;
     }
     while(1) {
-        if(contain_interval.start_pt() - check_interval.start_pt() <= period) 
-        {
-            if (contain_interval.end_pt() - check_interval.end_pt() <= period)
-            {
+        if(contain_interval.start_pt() - check_interval.start_pt() <= period) {
+            if(contain_interval.end_pt() - check_interval.end_pt() <= period) {
                 break;
             }
         }
@@ -1844,54 +1836,41 @@ int check_interval_contained_periodic(SPAinterval check_interval, SPAinterval co
     return (contain_interval >> check_interval);
 }
 
-surface* offset_torus(torus* original_torus, double offset_distance, error_info*& err)
-{
+surface* offset_torus(torus* original_torus, double offset_distance, error_info*& err) {
     torus* offs_torus = nullptr;
     double new_minor_radius = original_torus->minor_radius + offset_distance;
-    if(fabs(new_minor_radius) <= SPAresabs || new_minor_radius * original_torus->minor_radius <= 0.0) 
-    {
+    if(fabs(new_minor_radius) <= SPAresabs || new_minor_radius * original_torus->minor_radius <= 0.0) {
         SPApar_pos uv_fail(0.0, 0.0);
-        if(err) 
-        {
+        if(err) {
             err = ACIS_NEW curvature_error_info(&uv_fail, 1, offset_distance, (ENTITY*)0, original_torus->minor_radius);
         }
         return offs_torus;
     }
-    if(original_torus->lemon()) 
-    {
-        if(fabs(new_minor_radius) > -original_torus->major_radius) 
-        {
+    if(original_torus->lemon()) {
+        if(fabs(new_minor_radius) > -original_torus->major_radius) {
             offs_torus = ACIS_NEW torus(original_torus->centre, original_torus->normal, original_torus->major_radius, new_minor_radius);
         }
     } else {
         offs_torus = ACIS_NEW torus(original_torus->centre, original_torus->normal, original_torus->major_radius, new_minor_radius);
     }
-    if (!offs_torus)
-    {
+    if(!offs_torus) {
         return offs_torus;
     }
     offs_torus->uv_oridir = original_torus->uv_oridir;
     SPApar_box off_pbox = offs_torus->param_range();
-    if(original_torus->subsetted_u()) 
-    {
-        if(!original_torus->subset_u_interval() .empty()) 
-        {
+    if(original_torus->subsetted_u()) {
+        if(!original_torus->subset_u_interval().empty()) {
             offs_torus->limit_u(original_torus->subset_u_interval());
-            if(offs_torus->param_range_u() .empty()) 
-            {
+            if(offs_torus->param_range_u().empty()) {
                 offs_torus = nullptr;
             }
         }
     }
-    if(offs_torus) 
-    {
-        if(original_torus->subsetted_v()) 
-        {
-            if(!original_torus->subset_v_interval() .empty()) 
-            {
+    if(offs_torus) {
+        if(original_torus->subsetted_v()) {
+            if(!original_torus->subset_v_interval().empty()) {
                 offs_torus->limit_v(original_torus->subset_v_interval());
-                if(offs_torus->param_range_v() .empty()) 
-                {
+                if(offs_torus->param_range_v().empty()) {
                     offs_torus = nullptr;
                 }
             }
@@ -1899,27 +1878,21 @@ surface* offset_torus(torus* original_torus, double offset_distance, error_info*
     }
     AcisVersion vt2 = AcisVersion(10, 0, 0);
     AcisVersion vt1 = GET_ALGORITHMIC_VERSION();
-    if (!(vt1 < vt2))
-    {
+    if(!(vt1 < vt2)) {
         return offs_torus;
     }
-    if (!offs_torus)
-    {
+    if(!offs_torus) {
         return offs_torus;
     }
-    if (!offs_torus->vortex())
-    {
+    if(!offs_torus->vortex()) {
         return offs_torus;
     }
-    if (!offs_torus->subsetted())
-    {
+    if(!offs_torus->subsetted()) {
         return offs_torus;
     }
     double started = offs_torus->param_range_u().start_pt();
-    if(!offs_torus->singular_u(started)) 
-    {
-        if (!offs_torus->singular_u(offs_torus->param_range_u().end_pt()))
-        {
+    if(!offs_torus->singular_u(started)) {
+        if(!offs_torus->singular_u(offs_torus->param_range_u().end_pt())) {
             return offs_torus;
         }
     }
@@ -1927,17 +1900,14 @@ surface* offset_torus(torus* original_torus, double offset_distance, error_info*
     const_v->unlimit();
     SPAinterval u_range = offs_torus->param_range_u();
     SPAinterval v_range = offs_torus->param_range_v();
-    if(offs_torus->singular_u(offs_torus->param_range_u().start_pt())) 
-    {
+    if(offs_torus->singular_u(offs_torus->param_range_u().start_pt())) {
         u_range = SPAinterval(-M_PI, u_range.end_pt());
     }
-    if(offs_torus->singular_u(offs_torus->param_range_u().end_pt())) 
-    {
+    if(offs_torus->singular_u(offs_torus->param_range_u().end_pt())) {
         u_range = SPAinterval(u_range.start_pt(), M_PI);
     }
     SPAunit_vector axis(offs_torus->normal);
-    if (offs_torus->reverse_v)
-    {
+    if(offs_torus->reverse_v) {
         axis = -axis;
     }
     rot_spl_sur* v33 = ACIS_NEW rot_spl_sur(*const_v, offs_torus->centre, axis, u_range, v_range);
@@ -1947,16 +1917,993 @@ surface* offset_torus(torus* original_torus, double offset_distance, error_info*
     SPApar_pos uv(uval, vval);
     SPAunit_vector norm0 = offs_torus->eval_normal(uv);
     SPAunit_vector norm1 = v35.eval_normal(uv);
-    if ((norm0 % norm1) < 0.0)
-    {
+    if((norm0 % norm1) < 0.0) {
         v35.negate();
     }
-    if(const_v) 
-    {
+    if(const_v) {
         ACIS_DELETE const_v;
-    } 
+    }
     ACIS_DELETE offs_torus;
     return (torus*)&v35;
+}
+
+surface* offset_spline(surface* originalSpline, SPAbox& region_of_interest, double in_offset_distance, int& part_inv, offset_surface_options* off_sur_opts, error_info*& err, SPApar_box& in_par_box, FACE* in_face, int* adaptive_flag, FACE* orig_face) {
+    AcisVersion cav = GET_ALGORITHMIC_VERSION();
+    spline* offsurf = nullptr;
+    spline* iop_failsafe_offsurf = nullptr;
+    if(!originalSpline || !SUR_is_spline(*originalSpline)) {
+        return offsurf;
+    }
+    spline* original_spline = (spline*)originalSpline;
+    int acis_r15_or_greater = (cav >= AcisVersion(15, 0, 0));
+    int acis_r18_or_greater = (cav >= AcisVersion(18, 0, 0));
+    double offset_distance = in_offset_distance;
+    if(adaptive_flag) {
+        *adaptive_flag = 0;
+    }
+    SPAunit_vector N;
+    if(!off_sur_opts->simplify || (!bs3_surface_planar(original_spline->sur(), N))) {
+        spline* offs_spline = nullptr;
+        part_inv = 0;
+        SPApar_box range = original_spline->param_range(region_of_interest);
+        int u_g1_num = 0;
+        const double* u_g1_dis = original_spline->discontinuities_u(u_g1_num, 1);
+        int v_g1_num = 0;
+        const double* v_g1_dis = original_spline->discontinuities_v(v_g1_num, 1);
+        int g1_smoothed = 0;
+        int nu_real = 1;
+        int nv_real = 1;
+        option_header* project_option = find_option("adaptive_project_option");
+        if(real_G1_discs(*original_spline, range, offset_distance, nu_real, nv_real)) {
+            if(acis_r15_or_greater && /*project_option->on() &&*/ (u_g1_num > 0 || v_g1_num > 0)) {
+                double pos_tol;
+                if(fabs(in_offset_distance * 0.1) <= SPAresfit)
+                    pos_tol = fabs(in_offset_distance * 0.1);
+                else
+                    pos_tol = SPAresfit;
+                int do_tolerize = off_sur_opts->tolerize;
+                double tan_tol = res_near_tangent.value();
+                if(sg_smooth_face_at_disc(in_face, pos_tol, tan_tol, do_tolerize)) {
+                    update_face_geom_options ufg_opts(1);
+                    ufg_opts.tolerize = off_sur_opts->tolerize;
+                    ufg_opts.replace_edges_with_parintcurve = off_sur_opts->replace_edges_with_parintcurve;
+                    ufg_opts.replace_surf = 0;
+                    if(!off_sur_opts->replace_edges_with_parintcurve) {
+                        off_sur_opts->need_par_int_curs = 1;
+                    }
+                    sg_update_face_geometry(in_face, NULL, &ufg_opts);
+                    original_spline = (spline*)&(in_face->geometry()->equation());
+                    g1_smoothed = 1;
+                    if(adaptive_flag) {
+                        *adaptive_flag = 1;
+                    }
+                }
+            }
+            int trim = 1;
+            if(SUR_is_sweep(*original_spline)) {
+                int nudisc = -1;
+                const double* udisc = original_spline->discontinuities_u(nudisc, 1);
+                if(nudisc || !off_sur_opts->make_approx_sf) {
+                    if(cav < AcisVersion(21, 0, 0)) {
+                        /*alloc_ptr = (void*)udisc;
+                        ACIS_STD_TYPE_OBJECT::operator delete[]((void*)udisc);*/
+                    }
+                } else {
+                    trim = 0;
+                }
+            }
+            if(trim) {
+                range = reduce_range_if_surface_not_G1(*original_spline, range, offset_distance);
+            }
+        }
+        int failed_to_make_blend = 0;
+        int is_chamfer = 0;
+        int bIsBlendSpline = SUR_is_vertex_blend(*original_spline) || SUR_is_pipe(*original_spline) || SUR_is_procedural_blend(*original_spline);
+        if(bIsBlendSpline) {
+            if(!adaptive_flag) {
+                adaptive_flag = &(SpaAcis::NullObj::get_logical());
+            }
+            int bBlendOffsetSucceed = offset_blend_surface(original_spline, region_of_interest, offset_distance, part_inv, off_sur_opts, offs_spline, range, failed_to_make_blend, in_face, is_chamfer, *adaptive_flag, NULL);
+            if(bBlendOffsetSucceed) {
+                if((cav >= AcisVersion(29, 0, 0)) && offs_spline && !failed_to_make_blend && off_sur_opts->make_approx_sf) {
+                    bs3_surf_def* bs3_surf = offs_spline->sur();
+                    SPApar_box original_box = original_spline->param_range();
+                    bool bad_surf = !bs3_surface_check_hull(bs3_surf) && (!sg_check_surface_self_intersections(offs_spline, original_box));
+                    if(bad_surf) {
+                        offs_spline = nullptr;
+                        SPAinterval v_range = original_spline->param_range_v();
+                        if(!adaptive_flag) {
+                            adaptive_flag = &(SpaAcis::NullObj::get_logical());
+                        }
+                        bBlendOffsetSucceed = offset_blend_surface(original_spline, region_of_interest, offset_distance, part_inv, off_sur_opts, offs_spline, range, failed_to_make_blend, in_face, is_chamfer, *adaptive_flag, &v_range);
+                    }
+                }
+                if(bBlendOffsetSucceed) {
+                    return offs_spline;
+                }
+            }
+        }
+        if(SUR_is_rot_surface(*original_spline)) {
+            spline** pieces = nullptr;
+            spline* offset_piece = nullptr;
+            int npieces;
+            if(wire_offset_approach_worked(*original_spline, -offset_distance, 1, npieces, pieces, &offset_piece, NULL)) {
+                offs_spline = offset_piece;
+                range = offset_piece->param_range();
+                return offs_spline;
+            }
+        }
+        if(acis_r18_or_greater) {
+            offs_spline = offset_helix_sweep(*original_spline, offset_distance);
+            if(offs_spline) {
+                return offs_spline;
+            }
+        }
+        if(acis_r15_or_greater && /*project_option->on() &&*/ off_sur_opts->do_adaptive) {
+            int replace_edges_with_parintcurve = off_sur_opts->replace_edges_with_parintcurve;
+            int tolerize = off_sur_opts->tolerize;
+            int outwards = offset_distance > 0.0;
+            if(offset_skin(original_spline, in_face, outwards, tolerize, replace_edges_with_parintcurve)) {
+                range = original_spline->param_range();
+                if(adaptive_flag) {
+                    *adaptive_flag = 1;
+                }
+                if(!off_sur_opts->replace_edges_with_parintcurve) {
+                    off_sur_opts->need_par_int_curs = 1;
+                }
+            }
+            if(fix_parallel_uv_at_extrema(original_spline, range, in_face, offset_distance, off_sur_opts->tolerize, off_sur_opts->replace_edges_with_parintcurve)) {
+                range = original_spline->param_range();
+                if(adaptive_flag) {
+                    *adaptive_flag = 1;
+                }
+                if(!off_sur_opts->replace_edges_with_parintcurve) {
+                    off_sur_opts->need_par_int_curs = 1;
+                }
+            }
+        }
+        const spl_sur& spl_sur = original_spline->get_spl_sur();
+        if(spl_sur.type() == off_spl_sur::id()) {
+            const off_spl_sur& off_sur = (const off_spl_sur&)original_spline->get_spl_sur();
+            double total_offset = fabs(offset_distance + off_sur.get_offset_distance());
+            if(SPAresabs > total_offset) {
+                const surface* progenitor = off_sur.get_progenitor();
+                return (spline*)progenitor->copy_surf();
+            }
+        }
+        double started = range.u_range().start_pt();
+        int low_u = original_spline->singular_u(started);
+        int low_v = original_spline->singular_v(range.v_range().start_pt());
+        int high_u = original_spline->singular_u(range.u_range().end_pt());
+        int high_v = original_spline->singular_v(range.v_range().end_pt());
+        int singular_u = low_u || high_u;
+        int singular_v = low_v || high_v;
+        int split_flag = 0;
+        option_header* lop_split = find_option("lop_split_sing_faces_along_sharp_edge");
+        if(singular_u || singular_v) {
+            if((cav >= AcisVersion(17, 0, 1)) && lop_split->on() && off_sur_opts->allow_split) {
+                ENTITY_LIST singular_vertices;
+                spline_face_with_singularity_on_boundary(in_face, singular_vertices);
+                split_flag = check_for_split_conditions(in_face, singular_vertices, offset_distance);
+            }
+        }
+        int NREPEAT = 15;
+        SPApar_pos uv_fail[15];
+        SPApar_box orig_range(range);
+        int use_face_par_box = 0;
+        if((cav >= AcisVersion(14, 0, 0)) && (&in_par_box) && !SpaAcis::NullObj::check_par_box(in_par_box) && (range >> in_par_box)) {
+            use_face_par_box = 1;
+        }
+        int trim_in_v = !is_chamfer && SUR_is_var_blend(*original_spline);
+        int trim_in_u = SUR_is_ruled_surface(*original_spline);
+        if(SUR_is_sum_spl(*original_spline)) {
+            double dummy = 0.0;
+            curve* cur1 = original_spline->get_spl_sur().get_profile(dummy);
+            if(CUR_is_straight(*cur1)) {
+                trim_in_v = 1;
+            }
+            curve* cur2 = original_spline->get_spl_sur().get_path();
+            if(CUR_is_straight(*cur2)) {
+                trim_in_u = 1;
+            }
+            if(cur1) {
+                ACIS_DELETE cur1;
+            }
+            if(cur2) {
+                ACIS_DELETE cur2;
+            }
+        }
+        int skip_smoothing = 0;
+        int recognized_as_blend = 0;
+        if((cav >= AcisVersion(17, 0, 0)) && SUR_is_exact_spline(*original_spline) && test_blend_face_callback && orig_face) {
+            ENTITY_LIST spring_edges;
+            ENTITY_LIST cross_edges;
+            SPAinterval range_u = orig_face->geometry()->equation().param_range_u();
+            SPAinterval range_v = orig_face->geometry()->equation().param_range_v();
+            double tol = 0.0349;
+            recognized_as_blend = test_blend_face_callback(orig_face, tol, SpaAcis::NullObj::get_ENTITY_LIST(), spring_edges, cross_edges);
+            skip_smoothing = recognized_as_blend;
+            if(recognized_as_blend && spring_edges.iteration_count() > 0) {
+                EDGE* spring_edge = (EDGE*)spring_edges.first();
+                SPAvector edge_deriv = spring_edge->start_deriv();
+                SPAunit_vector edge_dir = normalise(edge_deriv);
+                double curv = orig_face->geometry()->equation().point_cross(spring_edge->start_pos(), edge_dir);
+                if(curv < 0.0 && offset_distance > 0.0) {
+                    int is_singular = 0;
+                    if(cav >= AcisVersion(20, 0, 2)) {
+                        is_singular = ((orig_face->geometry()->equation().singular_u(range_u.start_pt())) || (orig_face->geometry()->equation().singular_u(range_u.end_pt())) || (orig_face->geometry()->equation().singular_v(range_v.start_pt())) ||
+                                       (orig_face->geometry()->equation().singular_v(range_v.end_pt())));
+                    }
+                    if(!is_singular && (curv < 0.0 && 1.1 / curv + offset_distance > 0.0 || curv > 0.0 && 1.1 / curv + offset_distance < 0.0)) {
+                        return (spline*)NULL;
+                    }
+                    skip_smoothing = 0;
+                }
+                if(curv > 0.0 && offset_distance < 0.0) {
+                    int is_singular = 0;
+                    if(cav >= AcisVersion(20, 0, 2)) {
+                        is_singular = ((orig_face->geometry()->equation().singular_u(range_u.start_pt())) || (orig_face->geometry()->equation().singular_u(range_u.end_pt())) || (orig_face->geometry()->equation().singular_v(range_v.start_pt())) ||
+                                       (orig_face->geometry()->equation().singular_v(range_v.end_pt())));
+                    }
+                    if(!is_singular && (curv < 0.0 && 1.1 / curv + offset_distance > 0.0 || curv > 0.0 && 1.1 / curv + offset_distance < 0.0)) {
+                        return (spline*)NULL;
+                    }
+                    skip_smoothing = 0;
+                }
+            }
+        }
+        if(!recognized_as_blend) {
+            if(in_face) {
+                if(SUR_is_exact_spline(*original_spline)) {
+                    if(!bs3_surface_rational_u(original_spline->sur())) {
+                        bs3_surface_rational_v(original_spline->sur());
+                    }
+                }
+            }
+        }
+        bool bProgenitorCopy = fixBadSingularities(original_spline);
+        int attempt_to_extend_singular_blend = 0;
+        int conical_surface = SUR_is_cone(*original_spline);
+        int repeat;
+        for(repeat = 0; repeat < 15; ++repeat) {
+            int resignal_no = 0;
+            acis_exception error_info_holder(0, (error_info_base*)0);
+            error_info_base* error_info_base_ptr = nullptr;
+            exception_save exception_save_mark;
+            exception_save_mark.begin();
+            get_error_mark().buffer_init = 1;
+            int error_no = 0;
+
+            spline* v292 = ACIS_NEW spline;
+            if(v292) {
+                int in_did_adpative_offset;
+                if(adaptive_flag) {
+                    in_did_adpative_offset = *adaptive_flag;
+                } else {
+                    in_did_adpative_offset = 0;
+                }
+                int in_adaptive_offset = off_sur_opts->do_adaptive && /*project_option->on() &&*/ !repeat;
+                int subsetted = repeat > 0;
+                off_spl_sur* v290 = ACIS_NEW off_spl_sur(*original_spline, offset_distance, &range, 0, subsetted, in_adaptive_offset, in_did_adpative_offset);
+                *v292 = spline(v290);
+            }
+            offsurf = v292;
+
+            // int in_did_adpative_offset;
+            // if(adaptive_flag) {
+            //     in_did_adpative_offset = *adaptive_flag;
+            // }
+            // else {
+            //     in_did_adpative_offset = 0;
+            // }
+            // int in_adaptive_offset = off_sur_opts->do_adaptive && /*project_option->on() &&*/ !repeat;
+            // int subsetted = repeat > 0;
+            //*offsurf = spline(ACIS_NEW off_spl_sur(*original_spline, offset_distance, &range, 0, subsetted, in_adaptive_offset, in_did_adpative_offset));
+            option_header* bad_ofst_surface = find_option("iop_bad_ofst_surface");
+            if(!repeat && bad_ofst_surface->on()) {
+                iop_failsafe_offsurf = (spline*)offsurf->copy_surf();
+            }
+            int my_error_no = 0;
+            error_info* my_error_info_ptr = nullptr;
+            int err_num = 0;
+            acis_exception v545(0, (error_info_base*)0);
+            error_info_base* eib = nullptr;
+            exception_save v518;
+            v518.begin();
+            get_error_mark().buffer_init = 1;
+            int v133 = 0;
+            int force_bs3_on_error = !repeat && off_sur_opts->do_adaptive && /*project_option->on() &&*/ acis_r15_or_greater;
+            if(off_sur_opts->make_approx_sf) {
+                double reqd_fit = surface_fitol.value();
+                ((off_spl_sur&)offsurf->get_spl_sur()).make_approx_for_testing(reqd_fit, *offsurf, 0, force_bs3_on_error, 1);
+                ((off_spl_sur&)offsurf->get_spl_sur()).check_surface(force_bs3_on_error);
+            }
+            if(v133) {
+                if(ILLEGAL_SURFACE == v133 || (cav < AcisVersion(16, 0, 1))) {
+                    my_error_no = v133;
+                    if(eib) {
+                        my_error_info_ptr = base_to_err_info(eib);
+                        eib->add();
+                    }
+                    err_num = 0;
+                }
+            }
+            if(err_num || acis_interrupted()) {
+                sys_error(err_num, eib);
+            }
+            int high_degree_spline = 0;
+            if(SUR_is_exact_spline(*original_spline)) {
+                bs3_surf_def* bs3 = original_spline->sur();
+                if(bs3_surface_degree_u(bs3) > 8 || bs3_surface_degree_v(bs3) > 8) {
+                    high_degree_spline = 1;
+                }
+            }
+            int fail = 0;
+            if(!my_error_no && !split_flag) {
+                if(SUR_is_rot_surface(*original_spline)) {
+                    SPAinterval u_range = original_spline->param_range_u();
+                    if(in_face) {
+                        ENTITY_LIST singular_vertex;
+                        spline_face_with_singularity_on_boundary(in_face, singular_vertex);
+                        singular_vertex.init();
+                        for(VERTEX* this_vertex = (VERTEX*)singular_vertex.next(); this_vertex; this_vertex = (VERTEX*)singular_vertex.next()) {
+                            SPApar_pos param_actual;
+                            SPAposition foot;
+                            original_spline->point_perp(this_vertex->geometry()->coords(), foot, SpaAcis::NullObj::get_par_pos(), param_actual, 0);
+                            if(!offsurf->singular_u(param_actual.u)) {
+                                if(!offsurf->singular_v(param_actual.v)) {
+                                    fail = 1;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+                if(!fail) {
+                LABEL_225:
+                    break;
+                }
+            }
+            if(my_error_no == ILLEGAL_SURFACE && failed_to_make_blend && !repeat) {
+                attempt_to_extend_singular_blend = 1;
+            }
+            if(fail || my_error_info_ptr && (my_error_info_ptr->type() == svec_error_info::id()) || split_flag) {
+                SPApar_pos uv(0.0, 0.0);
+                if(my_error_info_ptr) {
+                    uv_fail[repeat] = ((svec_error_info*)my_error_info_ptr)->uv();
+                    my_error_info_ptr->remove();
+                    uv = uv_fail[repeat];
+                }
+                int bBreak = 0;
+                if(acis_r15_or_greater && /*project_option->on() &&*/ off_sur_opts->do_adaptive && !repeat && !part_inv) {
+                    set_global_error_info();
+                    outcome result(0, (error_info*)0);
+                    int error_num = 0;
+                    problems_list_prop problems_prop;
+                    int v154 = 0;
+                    acis_exception v547(0, (error_info_base*)0);
+                    error_info_base* e_info = nullptr;
+                    exception_save v519;
+                    api_bb_save make_bulletin_board(result, api_bb_save::trial);
+                    v519.begin();
+                    get_error_mark().buffer_init = 1;
+                    int v138 = 0;
+                    ACISExceptionCheck("API");
+                    int call_update_from_bb = 1;
+                    int bAdaptiveOffsetWorked = 0;
+                    bAdaptiveOffsetWorked = local_curvature_fix_up(original_spline, offsurf, offset_distance, range, 0, uv, in_face, off_sur_opts, fail, split_flag, orig_face, skip_smoothing);
+                    if(bAdaptiveOffsetWorked) {
+                        bBreak = 1;
+                        if(offsurf) {
+                            if(adaptive_flag) {
+                                *adaptive_flag = 1;
+                            }
+                            originalSpline = (spline*)&(in_face->geometry()->equation_for_update());
+                            if(bProgenitorCopy) {
+                            }
+                            original_spline = nullptr;
+                        }
+                    }
+                    if(result.ok() && call_update_from_bb) {
+                        update_from_bb();
+                    }
+                    if(v138) {
+                        result = outcome(v138, base_to_err_info(e_info));
+                    }
+                    if(acis_interrupted()) {
+                        sys_error(v154, e_info);
+                    }
+                    error_num = result.error_number();
+                    problems_prop.process_result(result, PROBLEMS_LIST_PROP_OR_IGNORE, 0);
+                    result.ok();
+                }
+                if(fail || bBreak || !off_sur_opts->trim_bad_geometry) {
+                    goto LABEL_225;
+                }
+                SPAinterval urange = orig_range.u_range();
+                SPAinterval vrange = orig_range.v_range();
+                for(int k = 0; k < repeat; ++k) {
+                    if(use_face_par_box) {
+                        if((uv_fail[k].u < in_par_box.u_range().mid_pt()) == (uv.u < uv_fail[k].u)) {
+                            uv.u = uv_fail[k].u;
+                        }
+                        if((uv_fail[k].v < in_par_box.v_range().mid_pt()) == (uv.v < uv_fail[k].v)) {
+                            uv.v = uv_fail[k].v;
+                        }
+                    } else {
+                        if((uv_fail[k].u < urange.mid_pt()) == (uv.u < uv_fail[k].u)) {
+                            uv.u = uv_fail[k].u;
+                        }
+                        if((uv_fail[k].v < vrange.mid_pt()) == (uv.v < uv_fail[k].v)) {
+                            uv.v = uv_fail[k].v;
+                        }
+                    }
+                }
+                SPApar_pos worst_uv = uv;
+                for(int k = -1; k < repeat; ++k) {
+                    if(k > -1) {
+                        uv = uv_fail[k];
+                        if(!(urange >> uv.u)) {
+                            continue;
+                        }
+                        if(!(vrange >> uv.v)) {
+                            continue;
+                        }
+                    }
+                    double urat, vrat;
+                    if(use_face_par_box) {
+                        urat = (uv.u - in_par_box.u_range().mid_pt()) / urange.length();
+                        vrat = (uv.v - in_par_box.v_range().mid_pt()) / vrange.length();
+                    } else {
+                        urat = (uv.u - urange.mid_pt()) / urange.length();
+                        vrat = (uv.v - vrange.mid_pt()) / vrange.length();
+                    }
+                    if(trim_in_u || !trim_in_v && (fabs(vrat) <= fabs(urat)) && (!singular_v || singular_u)) {
+                        double d = 0.05 * urange.length();
+                        if(urat <= 0.0) {
+                            double d1 = (uv.u + d);
+                            if(use_face_par_box) {
+                                if(uv.u < (in_par_box.u_range().start_pt() - SPAresabs)) {
+                                    if(d1 > in_par_box.u_range().start_pt()) {
+                                        d1 = in_par_box.u_range().start_pt();
+                                    }
+                                }
+                            }
+                            urange = SPAinterval(d1, urange.end_pt());
+                        } else {
+                            double d2 = (uv.u - d);
+                            if(use_face_par_box) {
+                                if(uv.u > (in_par_box.u_range().end_pt() + SPAresabs)) {
+                                    if(in_par_box.u_range().end_pt() > d2) {
+                                        d2 = in_par_box.u_range().end_pt();
+                                    }
+                                }
+                            }
+                            urange = SPAinterval(urange.start_pt(), d2);
+                        }
+                    } else {
+                        double inc = 0.05 * vrange.length();
+                        if(vrat <= 0.0) {
+                            double lower_limit = (uv.v + inc);
+                            if(use_face_par_box) {
+                                if((uv.v < (in_par_box.v_range().start_pt() - SPAresabs))) {
+                                    if(lower_limit > in_par_box.v_range().start_pt()) {
+                                        lower_limit = in_par_box.v_range().start_pt();
+                                    }
+                                }
+                            }
+                            vrange = SPAinterval(lower_limit, vrange.end_pt());
+                        } else {
+                            double upper_limit = (uv.v - inc);
+                            if(use_face_par_box) {
+                                if(uv.v > (in_par_box.v_range().end_pt() + SPAresabs)) {
+                                    if(in_par_box.v_range().end_pt() > upper_limit) {
+                                        upper_limit = in_par_box.v_range().end_pt();
+                                    }
+                                }
+                            }
+                            vrange = SPAinterval(vrange.start_pt(), upper_limit);
+                        }
+                    }
+                }
+                if(offsurf) {
+                    offsurf = nullptr;
+                }
+                range = SPApar_box(urange, vrange);
+            }
+            if(error_no && offsurf) {
+                offsurf = nullptr;
+            }
+            if(resignal_no || acis_interrupted()) {
+                sys_error(resignal_no, error_info_base_ptr);
+            }
+        }
+        if(originalSpline && attempt_to_extend_singular_blend && offsurf && offsurf->sur_present()) {
+            bool v180 = (originalSpline->singular_u(originalSpline->param_range_u().start_pt()) || originalSpline->singular_u(originalSpline->param_range_u().end_pt()));
+            for(int j = 0; j < repeat && !v180; ++j) {
+                SPApar_pos bad_uv = uv_fail[j];
+                if(originalSpline->singular_v(bad_uv.v)) {
+                    int v150 = 0;
+                    acis_exception v548(0, (error_info_base*)0);
+                    error_info_base* v255 = nullptr;
+                    exception_save v520;
+                    double* uknots = nullptr;
+                    BOUNDED_SURFACE* bsf = nullptr;
+                    SPAposition* pts = nullptr;
+                    SPAvector* u_part = nullptr;
+                    SPAvector* v_part = nullptr;
+                    SPAvector* uv_part = nullptr;
+                    v520.begin();
+                    get_error_mark().buffer_init = 1;
+                    int v149 = 0;
+                    int nu = 0;
+                    int n = 1;
+                    bs3_surface_knots_u(offsurf->sur(), nu, uknots);
+                    for(int m = 1; m < nu; ++m) {
+                        if(uknots[m] != uknots[m - 1]) {
+                            uknots[n++] = uknots[m];
+                        }
+                    }
+                    nu = n;
+                    SPApar_box pb = originalSpline->param_range();
+                    bsf = BSF_make_bounded_surface(originalSpline, pb);
+                    SVEC svec(bsf, 1.0e37, 1.0e37);
+                    int can_do = 1;
+                    SPAunit_vector norm(0.0, 0.0, 0.0);
+                    SPAposition singular_pos;
+                    for(int m = 0; m < nu && can_do; ++m) {
+                        svec.overwrite(uknots[m], bad_uv.v);
+                        svec.prepare_data(2);
+                        SPAunit_vector tmp_norm(svec.N());
+                        SPAposition tmp_pos(svec.P());
+                        if(tmp_norm.is_zero()) {
+                            can_do = 0;
+                        } else if(m) {
+                            can_do = parallel(norm, tmp_norm) && (singular_pos == tmp_pos);
+                        } else {
+                            norm = tmp_norm;
+                            singular_pos = tmp_pos;
+                        }
+                    }
+                    if(can_do) {
+                        SPAposition off_singular_pos = singular_pos + (offset_distance * norm);
+                        SPAinterval old_range_v = originalSpline->param_range_v();
+                        int v139 = (bad_uv.v < offsurf->param_range_v().start_pt());
+                        SPAposition v544;
+                        SPAvector deriv1[2];
+                        SPAvector deriv2[3];
+                        SPAvector* deriv[2];
+                        deriv[0] = deriv1;
+                        deriv[1] = deriv2;
+                        int nuv = 2 * nu;
+                        pts = ACIS_NEW SPAposition[nuv];
+                        u_part = ACIS_NEW SPAvector[nuv];
+                        v_part = ACIS_NEW SPAvector[nuv];
+                        uv_part = ACIS_NEW SPAvector[nuv];
+                        bs3_surf_def* new_bs3 = offsurf->sur();
+                        SPAinterval bs3_range = bs3_surface_range_v(new_bs3);
+                        double vval;
+                        if(bad_uv.v < offsurf->param_range_v().start_pt()) {
+                            vval = bs3_range.start_pt();
+                        } else {
+                            bs3_range = bs3_range.end_pt();
+                        }
+                        double new_v_knots[2];
+                        if(bad_uv.v < offsurf->param_range_v().start_pt()) {
+                            new_v_knots[0] = old_range_v.start_pt();
+                        } else {
+                            new_v_knots[0] = vval;
+                        }
+                        if(bad_uv.v < offsurf->param_range_v().start_pt()) {
+                            new_v_knots[1] = vval;
+                        } else {
+                            new_v_knots[1] = old_range_v.end_pt();
+                        }
+                        for(int ii = 0; ii < nu; ++ii) {
+                            bs3_surf_def* sur = new_bs3;
+                            bs3_surface_evaluate(SPApar_pos(uknots[ii], vval), sur, v544, deriv, 2, 0, 0);
+                            int index1, index2;
+                            if((bad_uv.v < offsurf->param_range_v().start_pt())) {
+                                index1 = 2 * ii;
+                            } else {
+                                index1 = 2 * ii + 1;
+                            }
+                            if((bad_uv.v < offsurf->param_range_v().start_pt())) {
+                                index2 = 2 * ii + 1;
+                            } else {
+                                index2 = 2 * ii;
+                            }
+                            svec.overwrite(uknots[ii], bad_uv.v, 99, 99);
+                            svec.prepare_normals(2, -1);
+                            pts[index1] = off_singular_pos;
+                            u_part[index1] = SPAvector(0.0, 0.0, 0.0);
+                            v_part[index1] = svec.Pv() + (offset_distance * svec.Nv());
+                            uv_part[index1] = svec.Puv() + (offset_distance * svec.Nuv());
+                            pts[index2] = v544;
+                            u_part[index2] = deriv1[0];
+                            v_part[index2] = deriv1[1];
+                            uv_part[index2] = deriv2[1];
+                        }
+                        bs3_surf_def* extension = bs3_surface_hermite_intp(nu, 2, pts, u_part, v_part, uv_part, uknots, new_v_knots);
+                        for(int ii = 0; ii < nu; ++ii) {
+                            bs3_surface_add_knot(uknots[ii], 3, extension, 0, SPAresnor);
+                        }
+                        if(extension) {
+                            new_bs3 = bs3_surface_copy(new_bs3);
+                            bs3_surf_def* new_bs;
+                            if(bad_uv.v < offsurf->param_range_v().start_pt()) {
+                                new_bs = bs3_surface_join_v(extension, new_bs3);
+                            } else {
+                                new_bs = bs3_surface_join_v(new_bs3, extension);
+                            }
+                            if(new_bs) {
+                                offsurf->set_sur(new_bs, offsurf->fitol());
+                            } else {
+                                bs3_surface_delete(new_bs3);
+                                bs3_surface_delete(extension);
+                            }
+                        }
+                    }
+                    delete[] pts;
+                    delete[] u_part;
+                    delete[] v_part;
+                    delete[] uv_part;
+                    delete[] uknots;
+                    if(acis_interrupted()) {
+                        sys_error(v150, v255);
+                    }
+                }
+            }
+            if(offsurf->param_range_u() == originalSpline->param_range_u()) {
+                if(offsurf->param_range_v() == originalSpline->param_range_v()) {
+                    repeat = 0;
+                }
+            }
+        }
+        if(repeat && err) {
+            err = ACIS_NEW curvature_error_info(uv_fail, repeat, offset_distance);
+        }
+        if(!offsurf || offsurf->undef() || off_sur_opts->make_approx_sf && !offsurf->sur_present()) {
+            offsurf = nullptr;
+        }
+        if(iop_failsafe_offsurf) {
+            option_header* bad_ofst_surface = find_option("iop_bad_ofst_surface");
+            if(!bad_ofst_surface->on() || offsurf) {
+                iop_failsafe_offsurf = nullptr;
+            } else {
+                offsurf = iop_failsafe_offsurf;
+            }
+        }
+        if(bProgenitorCopy) {
+        }
+        return offsurf;
+    }
+    if(original_spline->left_handed_uv()) {
+        N = -N;
+    }
+    SPApar_box rng = original_spline->param_range(region_of_interest);
+    SPApar_pos pp = rng.mid();
+    SPAposition pos = original_spline->eval_position(pp);
+    SPAposition new_pos = pos + (offset_distance * N);
+    plane* pl = ACIS_NEW plane(new_pos, N);
+    return (spline*)pl;
+}
+
+int offset_blend_surface(spline*& original_spline, SPAbox& region_of_interest, volatile double offset_distance, int& part_inv, offset_surface_options* off_sur_opts, spline*& offs_spline, SPApar_box& range, int& failed_to_make_blend, FACE* in_face,
+                         int& is_chamfer, int& adaptive_flag, SPAinterval* req_range) {
+    return 0;
+}
+
+int wire_offset_approach_worked(surface& sf, double offset, int udir, int& npieces, spline**& pieces, spline** offset_piece, FACE* owner_face) {
+    return 0;
+}
+
+int local_curvature_fix_up(spline* original_spline, spline*& offsurf, volatile double offset_distance, SPApar_box& range, int use_approximate_progenitor, SPApar_pos& uv, FACE* in_face, offset_surface_options* off_sur_opts, int fail, int split_flag,
+                           FACE* orig_face, int skip_smoothing) {
+    return 0;
+}
+
+spline* offset_helix_sweep(spline& rOriginalSpline, volatile double& fOffsetDistance) {
+    return nullptr;
+}
+
+int offset_skin(spline*& original_spline, FACE* in_face, int outwards, int tolerize, int replace_edges_with_parintcurve) {
+    return 0;
+}
+
+int fix_parallel_uv_at_extrema(spline*& original_spline, SPApar_box& range, FACE* in_face, volatile double offset_distance, int tolerize, int replace_edges_with_parintcurve) {
+    return 0;
+}
+
+bool fixBadSingularities(spline*& original_spline) {
+    // const SPApar_pos* v2;                                                         // rax
+    // const SPApar_pos* v3;                                                         // rax
+    // const SPApar_pos* v4;                                                         // rax
+    // const SPApar_pos* v5;                                                         // rax
+    // long double v6;                                                               // xmm0_8
+    // bs3_surf_def* v7;                                                             // rax
+    // bool bSurfaceReplaced;                                                        // [rsp+20h] [rbp-288h]
+    // bs3_surf_def* bs3Approx;                                                      // [rsp+28h] [rbp-280h]
+    // spline* pTempSpline;                                                          // [rsp+38h] [rbp-270h]
+    // SPAinterval uRange;                                                           // [rsp+48h] [rbp-260h] BYREF
+    // SPAinterval vRange;                                                           // [rsp+60h] [rbp-248h] BYREF
+    // SPApar_box*(__fastcall * param_range)(surface*, SPApar_box*, const SPAbox*);  // [rsp+78h] [rbp-230h]
+    // SPApar_box* v14;                                                              // [rsp+80h] [rbp-228h]
+    // SPAbox* v15;                                                                  // [rsp+88h] [rbp-220h]
+    // const surface* v16;                                                           // [rsp+90h] [rbp-218h]
+    // SPApar_box*(__fastcall * v17)(surface*, SPApar_box*, const SPAbox*);          // [rsp+98h] [rbp-210h]
+    // SPApar_box* v18;                                                              // [rsp+A0h] [rbp-208h]
+    // spline* v19;                                                                  // [rsp+A8h] [rbp-200h]
+    // long double started;                                                          // [rsp+B0h] [rbp-1F8h]
+    // const surface* v21;                                                           // [rsp+B8h] [rbp-1F0h]
+    // int(__fastcall * singular_u)(surface*, long double);                          // [rsp+C0h] [rbp-1E8h]
+    // long double vval;                                                             // [rsp+C8h] [rbp-1E0h]
+    // long double uval;                                                             // [rsp+D0h] [rbp-1D8h]
+    // long double v25;                                                              // [rsp+D8h] [rbp-1D0h]
+    // const surface* v26;                                                           // [rsp+E0h] [rbp-1C8h]
+    // int(__fastcall * v27)(surface*, long double);                                 // [rsp+E8h] [rbp-1C0h]
+    // long double v28;                                                              // [rsp+F0h] [rbp-1B8h]
+    // long double v29;                                                              // [rsp+F8h] [rbp-1B0h]
+    // long double v30;                                                              // [rsp+100h] [rbp-1A8h]
+    // const surface* v31;                                                           // [rsp+108h] [rbp-1A0h]
+    // int(__fastcall * singular_v)(surface*, long double);                          // [rsp+110h] [rbp-198h]
+    // long double v33;                                                              // [rsp+118h] [rbp-190h]
+    // long double v34;                                                              // [rsp+120h] [rbp-188h]
+    // long double v35;                                                              // [rsp+128h] [rbp-180h]
+    // const surface* v36;                                                           // [rsp+130h] [rbp-178h]
+    // int(__fastcall * v37)(surface*, long double);                                 // [rsp+138h] [rbp-170h]
+    // long double v38;                                                              // [rsp+140h] [rbp-168h]
+    // long double v39;                                                              // [rsp+148h] [rbp-160h]
+    // void(__fastcall * v40)(surface*);                                             // [rsp+150h] [rbp-158h]
+    //__int64 v41;                                                                  // [rsp+158h] [rbp-150h]
+    // SPAbox* box;                                                                  // [rsp+160h] [rbp-148h]
+    // const surface* v43;                                                           // [rsp+168h] [rbp-140h]
+    // SPApar_pos v44;                                                               // [rsp+170h] [rbp-138h] BYREF
+    // SPApar_pos v45;                                                               // [rsp+180h] [rbp-128h] BYREF
+    // SPApar_pos v46;                                                               // [rsp+190h] [rbp-118h] BYREF
+    // SPApar_pos v47;                                                               // [rsp+1A0h] [rbp-108h] BYREF
+    // check_fix cf_in;                                                              // [rsp+1B0h] [rbp-F8h] BYREF
+    // SPAvector singNormal;                                                         // [rsp+1E8h] [rbp-C0h] BYREF
+    // check_fix cf_out;                                                             // [rsp+200h] [rbp-A8h] BYREF
+    // SPApar_box v51;                                                               // [rsp+238h] [rbp-70h] BYREF
+    // SPApar_box v52;                                                               // [rsp+268h] [rbp-40h] BYREF
+
+    // if(!SUR_is_exact_spline(*original_spline)) return 0;
+    // bSurfaceReplaced = 0;
+    // SPAvector::SPAvector(&singNormal);
+    // v43 = *original_spline;
+    // param_range = (*original_spline)->param_range;
+    // box = SpaAcis::NullObj::get_box();
+    // v14 = param_range((surface*)v43, &v51, box);
+    // SPApar_box::u_range(v14, &uRange);
+    // v16 = *original_spline;
+    // v17 = (*original_spline)->param_range;
+    // v15 = SpaAcis::NullObj::get_box();
+    // v18 = v17((surface*)v16, &v52, v15);
+    // SPApar_box::v_range(v18, &vRange);
+    // v19 = (spline*)*original_spline;
+    // bs3Approx = spline::sur(v19, -1.0);
+    // v21 = *original_spline;
+    // singular_u = (*original_spline)->singular_u;
+    // started = SPAinterval::start_pt(&uRange);
+    // if(((unsigned int(__fastcall*)(const surface*))singular_u)(v21)) {
+    //     vval = SPAinterval::start_pt(&vRange);
+    //     uval = SPAinterval::start_pt(&uRange);
+    //     SPApar_pos::SPApar_pos(&v47, uval, vval);
+    //     bSurfaceReplaced = is_singular_evaluation_correct(bs3Approx, v2) == 0;
+    // }
+    // if(!bSurfaceReplaced) {
+    //     v26 = *original_spline;
+    //     v27 = (*original_spline)->singular_u;
+    //     v25 = SPAinterval::end_pt(&uRange);
+    //     if(((unsigned int(__fastcall*)(const surface*))v27)(v26)) {
+    //         v28 = SPAinterval::start_pt(&vRange);
+    //         v29 = SPAinterval::end_pt(&uRange);
+    //         SPApar_pos::SPApar_pos(&v46, v29, v28);
+    //         bSurfaceReplaced = is_singular_evaluation_correct(bs3Approx, v3) == 0;
+    //     }
+    // }
+    // if(!bSurfaceReplaced) {
+    //     v31 = *original_spline;
+    //     singular_v = (*original_spline)->singular_v;
+    //     v30 = SPAinterval::end_pt(&vRange);
+    //     if(((unsigned int(__fastcall*)(const surface*))singular_v)(v31)) {
+    //         v33 = SPAinterval::start_pt(&vRange);
+    //         v34 = SPAinterval::start_pt(&uRange);
+    //         SPApar_pos::SPApar_pos(&v44, v34, v33);
+    //         bSurfaceReplaced = is_singular_evaluation_correct(bs3Approx, v4) == 0;
+    //     }
+    // }
+    // if(!bSurfaceReplaced) {
+    //     v36 = *original_spline;
+    //     v37 = (*original_spline)->singular_v;
+    //     v35 = SPAinterval::end_pt(&vRange);
+    //     if(((unsigned int(__fastcall*)(const surface*))v37)(v36)) {
+    //         v38 = SPAinterval::end_pt(&vRange);
+    //         v39 = SPAinterval::start_pt(&uRange);
+    //         SPApar_pos::SPApar_pos(&v45, v39, v38);
+    //         bSurfaceReplaced = is_singular_evaluation_correct(bs3Approx, v5) == 0;
+    //     }
+    // }
+    // if(bSurfaceReplaced) {
+    //     pTempSpline = (spline*)surface::copy_surf((surface*)*original_spline);
+    //     check_fix::check_fix(&cf_in, 0);
+    //     check_fix::check_fix(&cf_out, 0);
+    //     v6 = safe_function_type<double>::operator double(&SPAresabs);
+    //     check_fix::set_interior_vertices(&cf_in, v6);
+    //     v7 = spline::sur(pTempSpline, -1.0);
+    //     if(bs3_surface_fix_degeneracy(v7, &cf_in, &cf_out)) {
+    //         *original_spline = pTempSpline;
+    //     } else {
+    //         if(pTempSpline) {
+    //             v40 = pTempSpline->~surface;
+    //             v41 = ((__int64(__fastcall*)(spline*, __int64))v40)(pTempSpline, 1i64);
+    //         } else {
+    //             v41 = 0i64;
+    //         }
+    //         return 0;
+    //     }
+    // }
+    // return bSurfaceReplaced;
+    return false;
+}
+
+bool spline_face_with_singularity_on_boundary(FACE* fa, ENTITY_LIST& singular_vertices) {
+    if(!fa) {
+        return false;
+    }
+    if(!is_SPLINE(fa->geometry())) {
+        return false;
+    }
+    bool retval = false;
+    for(LOOP* lp = fa->loop(); lp; lp = lp->next(PAT_CAN_CREATE)) {
+        COEDGE* coed = lp->start();
+        do {
+            if(coed->starts_at_singularity()) {
+                if(singular_vertices.iteration_count()) {
+                    singular_vertices.add(coed->start(), 1);
+                }
+                retval = true;
+            } else if(coed->ends_at_singularity()) {
+                if(singular_vertices.iteration_count()) {
+                    singular_vertices.add(coed->end(), 1);
+                }
+                retval = true;
+            }
+            coed = coed->next();
+        } while(coed != lp->start());
+    }
+    return retval;
+}
+
+void get_coedges_on_face_from_vertex(FACE* face, VERTEX* vert, COEDGE*& coed1, COEDGE*& coed2) {
+    coed1 = nullptr;
+    coed2 = nullptr;
+    EDGE* ed = vert->edge();
+    if(ed) {
+        COEDGE* coedge;
+        if(ed->coedge()->start() == vert) {
+            coedge = ed->coedge()->partner();
+        } else {
+            coedge = ed->coedge();
+        }
+        COEDGE* start = coedge;
+        if(!coedge) {
+            coedge = ed->coedge()->previous();
+            start = coedge;
+        }
+        while(1) {
+            if(coedge->loop()->face() == face) break;
+            coedge = coedge->next()->partner();
+            if(!coedge || start == coedge) goto LABEL_11;
+        }
+        coed1 = coedge;
+        coed2 = coedge->next();
+    LABEL_11:
+        if(!coedge) {
+            COEDGE* coedgea = start;
+            while(1) {
+                if(coedgea->loop()->face() == face) break;
+                if(coedgea->partner()) {
+                    coedgea = coedgea->partner()->previous();
+                } else {
+                    coedgea = nullptr;
+                }
+                if(!coedgea || start == coedgea) return;
+            }
+            coed1 = coedgea;
+            coed2 = coedgea->next();
+        }
+    }
+}
+
+int check_for_split_conditions(FACE* face, ENTITY_LIST& singular_vertices, double offset) {
+    double back_off_ratio = 0.1;
+    double sharp_threshold = 0.9;
+    double local_off = offset;
+    if(face->sense() == 1) {
+        local_off = -offset;
+    }
+    singular_vertices.init();
+    for(VERTEX* sing_vert = (VERTEX*)singular_vertices.next();; sing_vert = (VERTEX*)singular_vertices.next()) {
+        if(!sing_vert) {
+            return 0;
+        }
+        COEDGE* coed1 = nullptr;
+        COEDGE* coed2 = nullptr;
+        get_coedges_on_face_from_vertex(face, sing_vert, coed1, coed2);
+        if(coed1 && coed1->partner()) {
+            EDGE* ed = coed1->edge();
+            SPAinterval ed_range = ed->param_range();
+            SPAparameter ed_param;
+            if(ed->start() == sing_vert) {
+                double started = ed_range.start_pt();
+                ed_param = SPAparameter(started + ed_range.length() * back_off_ratio);
+            } else {
+                ed_param = SPAparameter(ed_range.end_pt() - ed_range.length() * back_off_ratio);
+            }
+            FACE* face1 = coed1->partner()->loop()->face();
+            double edge_param = ed_param.operator double();
+            SPAunit_vector face_norm = edge_param_norm(ed, edge_param, SPAtransf(), face);
+            SPAunit_vector face1_norm = edge_param_norm(ed, ed_param.operator double(), SPAtransf(), face1);
+            AcisVersion vt2 = AcisVersion(21, 0, 0);
+            AcisVersion vt1 = GET_ALGORITHMIC_VERSION();
+            int knife_edge;
+            if(!(vt1 >= vt2)) {
+                goto LABEL_13;
+            }
+            if(antiparallel(face_norm, face1_norm))
+                knife_edge = 1;
+            else
+            LABEL_13:
+                knife_edge = 0;
+            if(!knife_edge) {
+                if(sharp_threshold > (face_norm % face1_norm)) {
+                    SPAinterval coed1_range = coed1->param_range();
+                    SPAparameter coed1_param(coed1_range.end_pt() - coed1_range.length() * back_off_ratio);
+                    double coedge_param = coed1_param.operator double();
+                    SPAunit_vector v120 = coedge_param_dir(coed1, coedge_param);
+                    SPAvector v121 = face_norm * face1_norm;
+                    double conv1 = v121 % v120;
+                    if(conv1 > 0.0 && local_off > 0.0) goto LABEL_55;
+                    if(conv1 < 0.0 && local_off < 0.0) {
+                    LABEL_55:
+                        return 1;
+                    }
+                }
+            }
+        }
+        if(coed2 && coed2->partner()) {
+            EDGE* edge = coed2->edge();
+            SPAinterval v113 = edge->param_range();
+            SPAparameter v44;
+            if(edge->start() == sing_vert) {
+                v44 = SPAparameter(edge->param_range().start_pt() + edge->param_range().length() * back_off_ratio);
+            } else {
+                v44 = SPAparameter(edge->param_range().end_pt() - edge->param_range().length() * back_off_ratio);
+            }
+            SPAunit_vector v117 = edge_param_norm(edge, v44.operator double(), SPAtransf(), face);
+            SPAunit_vector v116 = edge_param_norm(edge, v44.operator double(), SPAtransf(), coed2->partner()->loop()->face());
+            int v36;
+            if(!(GET_ALGORITHMIC_VERSION() >= AcisVersion(21, 0, 0))) goto LABEL_36;
+            if(antiparallel(v117, v116))
+                v36 = 1;
+            else
+            LABEL_36:
+                v36 = 0;
+            if(!v36) {
+                if(sharp_threshold > (v117 % v116)) {
+                    SPAinterval coed2_range = coed2->param_range();
+                    SPAparameter coed2_param(coed2_range.start_pt() + coed2_range.length() * back_off_ratio);
+                    SPAunit_vector v122 = coedge_param_dir(coed2, coed2_param.operator double());
+                    double conv2 = (v117 * v116) % v122;
+                    if(conv2 > 0.0 && local_off > 0.0) break;
+                    if(conv2 < 0.0 && local_off < 0.0) break;
+                }
+            }
+        }
+    }
+    return 1;
 }
 
 surface* offset_surface(surface* original_surface, SPAbox& region_of_interest, double offset_distance, int& part_inv, offset_surface_options* off_sur_opts, error_info*& err, int* remake_face, SPApar_box& in_par_box, FACE* in_face, int* did_adaptive,
@@ -2122,6 +3069,7 @@ surface* offset_surface(surface* original_surface, SPAbox& region_of_interest, d
             offset_surfacea = offset_torus((torus*)original_surface, offset_distance, err);
             break;
         case spline_type:
+            offset_surfacea = offset_spline(original_surface, region_of_interest, offset_distance, part_inv, off_sur_opts, err, in_par_box, in_face, did_adaptive, orig_face);
             break;
         default:
             offset_surfacea = nullptr;

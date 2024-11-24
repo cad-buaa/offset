@@ -35,6 +35,10 @@
 #include "acis/unitvec.hxx"
 #include "acis/vlists.hxx"
 
+
+option_header iop_adaptive_ofst_surface("iop_adaptive_ofst_surface", 0);
+
+
 // outcome api_offset_face(FACE* given_face, double offset_distance, FACE*& offset_face, AcisOptions* ao) {
 //     return api_offset_face(given_face, offset_distance, offset_face, NULL, ao);
 // }

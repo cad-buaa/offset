@@ -22,7 +22,5 @@ outcome aei_OFFSET_FACE_2(ENTITY_LIST& output_ents, AcisOptions* ptrAcisOpt);
 outcome aei_OFFSET_FACE_3(ENTITY_LIST& output_ents, AcisOptions* ptrAcisOpt);
 outcome aei_OFFSET_FACE_4(ENTITY_LIST& output_ents, AcisOptions* ptrAcisOpt);
 outcome aei_OFFSET_FACE_5(ENTITY_LIST& output_ents, AcisOptions* ptrAcisOpt);
-
+outcome aei_OFFSET_FACE_6(ENTITY_LIST& output_ents, AcisOptions* ptrAcisOpt);
 outcome aei_OFFSET_WIRE_1(ENTITY_LIST& output_ents, AcisOptions* ptrAcisOpt);
-
-//void point_perp(straight* b, const SPAposition& point, SPAposition& foot, SPAunit_vector& tangent, SPAvector& curv, SPAparameter& param_actual);
