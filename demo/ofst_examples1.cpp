@@ -8,6 +8,7 @@
 #include "acis/rgbcolor.hxx"
 #include "acis/rnd_api.hxx"
 
+
 outcome aei_OFFSET_FACE_1(ENTITY_LIST& output_ents, AcisOptions* ptrAcisOpt) {
     FACE* givenface = NULL;
     FACE* offsetface = NULL;
@@ -97,7 +98,7 @@ outcome aei_OFFSET_FACE_3(ENTITY_LIST& output_ents, AcisOptions* ptrAcisOpt) {
     double top = 10.0;
     double ratio = 1.0;
     SPAposition pt(10.0, 0.0, 0.0);
-    check_outcome(api_face_cylinder_cone(center, normal, bottom, top, 0.0, 180.0, ratio, &pt, givenface));
+    check_outcome(api_face_cylinder_cone(center, normal, bottom, top, 0.0, 360.0, ratio, &pt, givenface));
     double distance = 10.0;
     check_outcome(gme_api_offset_face(givenface, distance, offsetface));
     // check_outcome(api_offset_face(givenface, distance, offsetface));
@@ -124,7 +125,7 @@ outcome aei_OFFSET_FACE_4(ENTITY_LIST& output_ents, AcisOptions* ptrAcisOpt) {
     double top = 0.0;
     double ratio = 1.0;
     SPAposition pt(10.0, 0.0, 0.0);
-    check_outcome(api_face_cylinder_cone(center, normal, bottom, top, 0.0, 180.0, ratio, &pt, givenface));
+    check_outcome(api_face_cylinder_cone(center, normal, bottom, top, 0.0, 360.0, ratio, &pt, givenface));
     double distance = 10.0;
     check_outcome(gme_api_offset_face(givenface, distance, offsetface));
     // check_outcome(api_offset_face(givenface, distance, offsetface));
@@ -160,6 +161,103 @@ outcome aei_OFFSET_FACE_5(ENTITY_LIST& output_ents, AcisOptions* ptrAcisOpt) {
     rgb_color Red(1.0, 0.0, 0.0);
     check_outcome(api_rh_set_entity_rgb(offsetface, Red));
     check_outcome(api_clear_annotations());
+    API_END
+    if(result.ok()) {
+        output_ents.add(givenface);
+        output_ents.add(offsetface);
+    }
+    return result;
+}
+
+outcome aei_OFFSET_FACE_6(ENTITY_LIST& output_ents, AcisOptions* ptrAcisOpt)
+{
+    FACE* givenface = NULL;
+    FACE* offsetface = NULL;
+    API_BEGIN
+    SPAposition ctrlpts[25];
+    ctrlpts[0].set_x(0.0);
+    ctrlpts[0].set_y(0.0);
+    ctrlpts[0].set_z(2.0);
+    ctrlpts[1].set_x(0.0);
+    ctrlpts[1].set_y(1.0);
+    ctrlpts[1].set_z(2.0);
+    ctrlpts[2].set_x(0.0);
+    ctrlpts[2].set_y(2.0);
+    ctrlpts[2].set_z(2.0);
+    ctrlpts[3].set_x(0.0);
+    ctrlpts[3].set_y(3.0);
+    ctrlpts[3].set_z(2.0);
+    ctrlpts[4].set_x(0.0);
+    ctrlpts[4].set_y(4.0);
+    ctrlpts[4].set_z(2.0);
+    ctrlpts[5].set_x(2.0);
+    ctrlpts[5].set_y(0.0);
+    ctrlpts[5].set_z(1.0);
+    ctrlpts[6].set_x(2.0);
+    ctrlpts[6].set_y(1.0);
+    ctrlpts[6].set_z(1.0);
+    ctrlpts[7].set_x(2.0);
+    ctrlpts[7].set_y(2.0);
+    ctrlpts[7].set_z(1.0);
+    ctrlpts[8].set_x(2.0);
+    ctrlpts[8].set_y(3.0);
+    ctrlpts[8].set_z(1.0);
+    ctrlpts[9].set_x(2.0);
+    ctrlpts[9].set_y(4.0);
+    ctrlpts[9].set_z(1.0);
+    ctrlpts[10].set_x(4.0);
+    ctrlpts[10].set_y(0.0);
+    ctrlpts[10].set_z(2.0);
+    ctrlpts[11].set_x(4.0);
+    ctrlpts[11].set_y(1.0);
+    ctrlpts[11].set_z(2.0);
+    ctrlpts[12].set_x(4.0);
+    ctrlpts[12].set_y(2.0);
+    ctrlpts[12].set_z(2.0);
+    ctrlpts[13].set_x(4.0);
+    ctrlpts[13].set_y(3.0);
+    ctrlpts[13].set_z(2.0);
+    ctrlpts[14].set_x(4.0);
+    ctrlpts[14].set_y(4.0);
+    ctrlpts[14].set_z(2.0);
+    ctrlpts[15].set_x(6.0);
+    ctrlpts[15].set_y(0.0);
+    ctrlpts[15].set_z(1.0);
+    ctrlpts[16].set_x(6.0);
+    ctrlpts[16].set_y(1.0);
+    ctrlpts[16].set_z(1.0);
+    ctrlpts[17].set_x(6.0);
+    ctrlpts[17].set_y(2.0);
+    ctrlpts[17].set_z(1.0);
+    ctrlpts[18].set_x(6.0);
+    ctrlpts[18].set_y(3.0);
+    ctrlpts[18].set_z(1.0);
+    ctrlpts[19].set_x(6.0);
+    ctrlpts[19].set_y(4.0);
+    ctrlpts[19].set_z(1.0);
+    ctrlpts[20].set_x(8.0);
+    ctrlpts[20].set_y(0.0);
+    ctrlpts[20].set_z(-2.0);
+    ctrlpts[21].set_x(8.0);
+    ctrlpts[21].set_y(1.0);
+    ctrlpts[21].set_z(-2.0);
+    ctrlpts[22].set_x(8.0);
+    ctrlpts[22].set_y(2.0);
+    ctrlpts[22].set_z(-2.0);
+    ctrlpts[23].set_x(8.0);
+    ctrlpts[23].set_y(3.0);
+    ctrlpts[23].set_z(-2.0);
+    ctrlpts[24].set_x(8.0);
+    ctrlpts[24].set_y(4.0);
+    ctrlpts[24].set_z(-2.0);
+    double weights[25] = {1.0, 1.0, 2.0, 1.0, 1.0, 2.0, 1.0, 1.0, 1.0, 1.0, 2.0, 1.0, 2.0, 1.0, 2.0, 1.0, 1.0, 1.0, 1.0, 2.0, 1.0, 1.0, 2.0, 1.0, 1.0};
+    double knots_u[9] = {0.0, 0.0, 0.0, 0.0, 0.5, 1.0, 1.0, 1.0, 1.0};
+    double knots_v[9] = {0.0, 0.0, 0.0, 0.0, 0.5, 1.0, 1.0, 1.0, 1.0};
+    check_outcome(api_mk_fa_spl_ctrlpts(3, FALSE, 0, 0, 5, 3, FALSE, 0, 0, 5, ctrlpts, weights, 1.e-6, 9, knots_u, 9, knots_v, 1.e-6, givenface));
+    double distance = 3.0;
+    check_outcome(gme_api_offset_face(givenface, distance, offsetface));
+    rgb_color Red(1.0, 0.0, 0.0);
+    check_outcome(api_rh_set_entity_rgb(offsetface, Red));
     API_END
     if(result.ok()) {
         output_ents.add(givenface);

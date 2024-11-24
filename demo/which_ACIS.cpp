@@ -227,6 +227,8 @@ ACIS_fp find_which_ACIS(WORD id) {
             return aei_OFFSET_FACE_4;
         case ID_OFST_FACE5:
             return aei_OFFSET_FACE_5;
+        case ID_OFST_FACE6:
+            return aei_OFFSET_FACE_6;
 
         case ID_OFST_WIRE1:
             return aei_OFFSET_WIRE_1;
