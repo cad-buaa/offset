@@ -5,6 +5,7 @@
 #include "ProtectedInterfaces/off_cu.hxx"  //陆
 #include "ProtectedInterfaces/ofsttools.hxx"
 #include "PublicInterfaces/gme_sgcofrtn.hxx"
+#include "PublicInterfaces/off_misc.hxx"
 #include "acis/acismath.h"
 #include "acis/acistype.hxx"
 #include "acis/annotation.hxx"
@@ -27,6 +28,7 @@
 #include "acis/curextnd.hxx"
 #include "acis/curve.hxx"
 #include "acis/debug.hxx"
+#include "acis/degenerate.hxx"
 #include "acis/deltop.hxx"
 #include "acis/dmexcept.hxx"
 #include "acis/ellipse.hxx"
@@ -394,15 +396,14 @@ int extend_coedges_to_intersection(curve_curve_int* iIntersections, COEDGE* c1, 
                 c1->end()->set_geometry(v74, 1);
                 c1->edge()->set_sense(c1->edge()->sense(), 1);
                 if(postR31 && (c2->start() == c2->end())) {
-                    c2->edge()->start()->lose();
+                    VERTEX* v62 = c2->edge()->start();
+                    v62->lose(); 
                     c2->edge()->set_start(c1->end(), 1, 1);
                     c2->edge()->set_end(c1->end(), 1, 1);
                 } else if(c2->sense()) {
                     c2->edge()->set_end(c1->end(), 1, 1);
-                    c2->edge()->end()->lose();
                 } else {
                     c2->edge()->set_start(c1->end(), 1, 1);
-                    c2->edge()->start()->lose();
                 }
                 double d2 = c1_geom->param(c1->end()->geometry()->coords());
                 double d1 = c1_geom->param(c1->start()->geometry()->coords());
@@ -615,258 +616,103 @@ int all_offset_degenerated(ENTITY_LIST& iCoedges) {
     return allDegenerated;
 }
 
-// curve* offset_geometry(curve const* geometry, SPAunit_vector const& in_normal, law* dist_law, law* twist_law, SPAinterval const& in_off_domain)
-//{
-//     double v5;                                 // xmm0_8
-//     AcisVersion* v6;                           // rax
-//     curve_law_data* v7;                        // rax
-//     law* v8;                                   // rax
-//     double v9;                                 // xmm0_8
-//     double v10;                                // xmm0_8
-//     double v11;                                // xmm0_8
-//     const SPAvector* v12;                      // rax
-//     const SPAvector* v13;                      // rax
-//     __int64 v14;                               // rax
-//     long double v15;                           // xmm0_8
-//     __int64 v16;                               // rax
-//     __int64 v17;                               // rax
-//     long double v18;                           // xmm0_8
-//     SPAvector* v19;                            // rax
-//     long double v20;                           // xmm0_8
-//     __int64 v21;                               // rax
-//     intcurve* offset_curve;                    // [rsp+40h] [rbp-2E8h]
-//     int i;                                     // [rsp+48h] [rbp-2E0h]
-//     int j;                                     // [rsp+4Ch] [rbp-2DCh]
-//     CURVE* simp_curv;                          // [rsp+50h] [rbp-2D8h]
-//     int v27;                                   // [rsp+58h] [rbp-2D0h]
-//     int num_ctrlpts;                           // [rsp+5Ch] [rbp-2CCh] BYREF
-//     int is_degenerate;                         // [rsp+60h] [rbp-2C8h]
-//     const ellipse* ell_geom;                   // [rsp+68h] [rbp-2C0h]
-//     SPAposition* ctrlpts;                      // [rsp+70h] [rbp-2B8h] BYREF
-//     law* geom_law;                             // [rsp+78h] [rbp-2B0h]
-//     const straight* straight_geom;             // [rsp+80h] [rbp-2A8h]
-//     long double off_radius;                    // [rsp+88h] [rbp-2A0h] BYREF
-//     intcurve* v35;                             // [rsp+90h] [rbp-298h]
-//     degenerate_curve* v36;                     // [rsp+98h] [rbp-290h]
-//     intcurve* v37;                             // [rsp+A0h] [rbp-288h]
-//     curve_law_data* v38;                       // [rsp+A8h] [rbp-280h]
-//     curve_law_data* v39;                       // [rsp+B0h] [rbp-278h]
-//     curve_law* v40;                            // [rsp+B8h] [rbp-270h]
-//     law* v41;                                  // [rsp+C0h] [rbp-268h]
-//     curve_law_data* cld;                       // [rsp+C8h] [rbp-260h]
-//     straight* v43;                             // [rsp+D0h] [rbp-258h]
-//     __int64 v44;                               // [rsp+D8h] [rbp-250h]
-//     ellipse* v45;                              // [rsp+E0h] [rbp-248h]
-//     intcurve* v46;                             // [rsp+E8h] [rbp-240h]
-//     degenerate_curve* v47;                     // [rsp+F0h] [rbp-238h]
-//     intcurve* v48;                             // [rsp+F8h] [rbp-230h]
-//     SPAinterval off_domain;                    // [rsp+100h] [rbp-228h] BYREF
-//     AcisVersion result;                        // [rsp+118h] [rbp-210h] BYREF
-//     AcisVersion* vt2;                          // [rsp+120h] [rbp-208h]
-//     AcisVersion* vt1;                          // [rsp+128h] [rbp-200h]
-//     long double in_end;                        // [rsp+130h] [rbp-1F8h]
-//     long double in_start;                      // [rsp+138h] [rbp-1F0h]
-//     curve_law_data* v55;                       // [rsp+140h] [rbp-1E8h]
-//     law* v56;                                  // [rsp+148h] [rbp-1E0h]
-//     long double* guess;                        // [rsp+150h] [rbp-1D8h]
-//     int* side;                                 // [rsp+158h] [rbp-1D0h]
-//     double v59;                                // [rsp+160h] [rbp-1C8h]
-//     long double* v60;                          // [rsp+168h] [rbp-1C0h]
-//     int* v61;                                  // [rsp+170h] [rbp-1B8h]
-//     long double offset_dist;                   // [rsp+178h] [rbp-1B0h]
-//     SPAposition* root;                         // [rsp+180h] [rbp-1A8h]
-//     __int64 v64;                               // [rsp+188h] [rbp-1A0h]
-//     long double tol;                           // [rsp+190h] [rbp-198h]
-//     long double fit_data;                      // [rsp+198h] [rbp-190h]
-//     long double maj_len;                       // [rsp+1A0h] [rbp-188h]
-//     intcurve* v68;                             // [rsp+1A8h] [rbp-180h]
-//     intcurve* v69;                             // [rsp+1B0h] [rbp-178h]
-//     long double v70;                           // [rsp+1B8h] [rbp-170h]
-//     long double v71;                           // [rsp+1C0h] [rbp-168h]
-//     long double v72;                           // [rsp+1C8h] [rbp-160h]
-//     long double v73;                           // [rsp+1D0h] [rbp-158h]
-//     bs3_curve_def* bs;                         // [rsp+1D8h] [rbp-150h]
-//     double v75;                                // [rsp+1E0h] [rbp-148h]
-//     long double resabs_sq;                     // [rsp+1E8h] [rbp-140h]
-//     void(__fastcall * v77)(struct intcurve*);  // [rsp+1F0h] [rbp-138h]
-//     __int64 v78;                               // [rsp+1F8h] [rbp-130h]
-//     intcurve* v79;                             // [rsp+200h] [rbp-128h]
-//     void* alloc_ptr;                           // [rsp+208h] [rbp-120h]
-//     AcisVersion v81;                           // [rsp+210h] [rbp-118h] BYREF
-//     SPAunit_vector normal;                     // [rsp+218h] [rbp-110h] BYREF
-//     SPAunit_vector str_dir;                    // [rsp+230h] [rbp-F8h] BYREF
-//     SPAunit_vector off_dir;                    // [rsp+248h] [rbp-E0h] BYREF
-//     SPAposition str_root;                      // [rsp+260h] [rbp-C8h] BYREF
-//     SPAvector off_major;                       // [rsp+278h] [rbp-B0h] BYREF
-//     SPAposition this_pos;                      // [rsp+290h] [rbp-98h] BYREF
-//     SPAvector v88;                             // [rsp+2A8h] [rbp-80h] BYREF
-//     SPAvector v89;                             // [rsp+2C0h] [rbp-68h] BYREF
-//     SPAposition v90;                           // [rsp+2D8h] [rbp-50h] BYREF
-//     SPAvector v91;                             // [rsp+2F0h] [rbp-38h] BYREF
-//
-//     offset_curve = 0i64;
-//     simp_curv = 0i64;
-//     SPAunit_vector::SPAunit_vector(&normal, in_normal);
-//     qmemcpy(&off_domain, in_off_domain, sizeof(off_domain));
-//     if(geometry) {
-//         if(geometry->type(geometry) == 11) {
-//             if(law::constant(dist_law)) {
-//                 v5 = safe_function_type<double>::operator double(&SPAresabs);
-//                 if((unsigned int)law::zero(twist_law, v5)) {
-//                     AcisVersion::AcisVersion(&v81, 12, 0, 0);
-//                     vt2 = v6;
-//                     vt1 = GET_ALGORITHMIC_VERSION(&result);
-//                     if(operator>=(vt1, vt2)) {
-//                         v38 = (curve_law_data*)ACIS_OBJECT::operator new(0x60ui64, eDefault, "E:\\build\\acis\\NTSwin_b64_debug\\SPAofst\\offset_sg_husk_cur_off.m\\src\\ofwire.cpp", 4416, &alloc_file_index_3517);
-//                         if(v38) {
-//                             in_end = SPAinterval::end_pt(&off_domain);
-//                             in_start = SPAinterval::start_pt(&off_domain);
-//                             curve_law_data::curve_law_data(v38, geometry, in_start, in_end);
-//                             v39 = v7;
-//                         } else {
-//                             v39 = 0i64;
-//                         }
-//                         v55 = v39;
-//                         cld = v39;
-//                         v40 = (curve_law*)ACIS_OBJECT::operator new(0x50ui64, eDefault, "E:\\build\\acis\\NTSwin_b64_debug\\SPAofst\\offset_sg_husk_cur_off.m\\src\\ofwire.cpp", 4419, &alloc_file_index_3517);
-//                         if(v40) {
-//                             curve_law::curve_law(v40, cld);
-//                             v41 = v8;
-//                         } else {
-//                             v41 = 0i64;
-//                         }
-//                         v56 = v41;
-//                         geom_law = v41;
-//                         law_data::remove(cld);
-//                         simp_curv = test_for_line(v41, &off_domain);
-//                         if(!simp_curv) simp_curv = test_for_circle(geom_law, &off_domain);
-//                         if(simp_curv) geometry = (straight*)simp_curv->equation(simp_curv);
-//                         law::remove(geom_law);
-//                     }
-//                 }
-//             }
-//         }
-//     }
-//     if(law::constant(dist_law) && (guess = SpaAcis::NullObj::get_double(), side = SpaAcis::NullObj::get_int(), v59 = safe_function_type<double>::operator double(&SPAresabs), v9 = law::eval(dist_law, 1.0, side, guess), v10 = fabs_0(v9), v59 > v10)) {
-//         offset_curve = (intcurve*)geometry->make_copy(geometry);
-//     } else {
-//         v27 = geometry->type(geometry);
-//         switch(v27) {
-//             case 1:
-//                 if(law::constant(dist_law) && (v11 = safe_function_type<double>::operator double(&SPAresabs), (unsigned int)law::zero(twist_law, v11))) {
-//                     v60 = SpaAcis::NullObj::get_double();
-//                     v61 = SpaAcis::NullObj::get_int();
-//                     offset_dist = law::eval(dist_law, 1.0, v61, v60);
-//                     straight_geom = geometry;
-//                     SPAposition::SPAposition(&str_root, &geometry->root_point);
-//                     SPAunit_vector::SPAunit_vector(&str_dir, &geometry->direction);
-//                     v12 = operator*(&v88, &str_dir, &normal);
-//                     normalise(&off_dir, v12);
-//                     v43 = (straight*)ACIS_OBJECT::operator new(0x58ui64, eDefault, "E:\\build\\acis\\NTSwin_b64_debug\\SPAofst\\offset_sg_husk_cur_off.m\\src\\ofwire.cpp", 4454, &alloc_file_index_3517);
-//                     if(v43) {
-//                         v13 = operator*(&v89, offset_dist, &off_dir);
-//                         root = operator+(&v90, &str_root, v13);
-//                         straight::straight(v43, root, &str_dir, 1.0);
-//                         v44 = v14;
-//                     } else {
-//                         v44 = 0i64;
-//                     }
-//                     v64 = v44;
-//                     offset_curve = (intcurve*)v44;
-//                     *(long double*)(v44 + 56) = straight_geom->param_scale;
-//                 } else {
-//                     tol = safe_function_type<double>::operator double(&SPAresabs);
-//                     fit_data = safe_function_type<double>::operator double(&SPAresfit);
-//                     offset_curve = (intcurve*)sg_offset_planar_curve(geometry, &off_domain, fit_data, dist_law, twist_law, &normal, 0, tol);
-//                 }
-//                 break;
-//             case 2:
-//                 ell_geom = (const ellipse*)geometry;
-//                 off_radius = 0.0;
-//                 if((unsigned int)get_circle_offset_radius(geometry, in_normal, dist_law, twist_law, &off_radius)) {
-//                     maj_len = SPAvector::len(&ell_geom->major_axis);
-//                     v15 = safe_function_type<double>::operator double(&SPAresabs);
-//                     if(off_radius <= v15) {
-//                         v47 = (degenerate_curve*)ACIS_OBJECT::operator new(0x38ui64, eDefault, "E:\\build\\acis\\NTSwin_b64_debug\\SPAofst\\offset_sg_husk_cur_off.m\\src\\ofwire.cpp", 4484, &alloc_file_index_3517);
-//                         if(v47) {
-//                             degenerate_curve::degenerate_curve(v47, &ell_geom->centre);
-//                             v48 = (intcurve*)v17;
-//                         } else {
-//                             v48 = 0i64;
-//                         }
-//                         v69 = v48;
-//                         offset_curve = v48;
-//                     } else {
-//                         operator*(&off_major, off_radius / maj_len, &ell_geom->major_axis);
-//                         v45 = (ellipse*)ACIS_OBJECT::operator new(0xB0ui64, eDefault, "E:\\build\\acis\\NTSwin_b64_debug\\SPAofst\\offset_sg_husk_cur_off.m\\src\\ofwire.cpp", 4477, &alloc_file_index_3517);
-//                         if(v45) {
-//                             ellipse::ellipse(v45, &ell_geom->centre, &ell_geom->normal, &off_major, 1.0, 0.0);
-//                             v46 = (intcurve*)v16;
-//                         } else {
-//                             v46 = 0i64;
-//                         }
-//                         v68 = v46;
-//                         offset_curve = v46;
-//                     }
-//                 } else {
-//                     v70 = safe_function_type<double>::operator double(&SPAresabs);
-//                     v71 = 10.0 * safe_function_type<double>::operator double(&SPAresfit);
-//                     offset_curve = (intcurve*)sg_offset_planar_curve(geometry, &off_domain, v71, dist_law, twist_law, &normal, 0, v70);
-//                 }
-//                 break;
-//             case 11:
-//                 v72 = safe_function_type<double>::operator double(&SPAresabs);
-//                 v73 = safe_function_type<double>::operator double(&SPAresfit);
-//                 offset_curve = (intcurve*)sg_offset_planar_curve(geometry, &off_domain, v73, dist_law, twist_law, &normal, 0, v72);
-//                 if(offset_curve->type(offset_curve) == 11) {
-//                     is_degenerate = 1;
-//                     bs = intcurve::cur(offset_curve, -1.0, 0);
-//                     num_ctrlpts = 0;
-//                     ctrlpts = 0i64;
-//                     bs3_curve_control_points(bs, &num_ctrlpts, &ctrlpts, 0);
-//                     v75 = safe_function_type<double>::operator double(&SPAresabs);
-//                     v18 = safe_function_type<double>::operator double(&SPAresabs);
-//                     resabs_sq = v75 * v18;
-//                     for(i = 0; i < num_ctrlpts && is_degenerate; ++i) {
-//                         SPAposition::SPAposition(&this_pos, &ctrlpts[i]);
-//                         for(j = num_ctrlpts - 1; j > i; --j) {
-//                             v19 = operator-(&v91, &this_pos, &ctrlpts[j]);
-//                             v20 = SPAvector::len_sq(v19);
-//                             if(v20 >= resabs_sq) {
-//                                 is_degenerate = 0;
-//                                 break;
-//                             }
-//                         }
-//                     }
-//                     if(is_degenerate) {
-//                         v35 = offset_curve;
-//                         if(offset_curve) {
-//                             v77 = v35->~intcurve;
-//                             v78 = ((__int64(__fastcall*)(intcurve*, __int64))v77)(v35, 1i64);
-//                         } else {
-//                             v78 = 0i64;
-//                         }
-//                         v36 = (degenerate_curve*)ACIS_OBJECT::operator new(0x38ui64, eDefault, "E:\\build\\acis\\NTSwin_b64_debug\\SPAofst\\offset_sg_husk_cur_off.m\\src\\ofwire.cpp", 4528, &alloc_file_index_3517);
-//                         if(v36) {
-//                             degenerate_curve::degenerate_curve(v36, ctrlpts);
-//                             v37 = (intcurve*)v21;
-//                         } else {
-//                             v37 = 0i64;
-//                         }
-//                         v79 = v37;
-//                         offset_curve = v37;
-//                     }
-//                     alloc_ptr = ctrlpts;
-//                     SPAposition::operator delete[](ctrlpts);
-//                 }
-//                 break;
-//         }
-//     }
-//     if(simp_curv) simp_curv->lose(simp_curv);
-//     return offset_curve;
-//
-//
-// }
+// 输入：几何，法向量，两个法则，曲线的参数域
+curve* gme_offset_geometry(curve const* geometry, SPAunit_vector const& in_normal, law* dist_law, law* twist_law, SPAinterval const& in_off_domain) {
+    intcurve* offset_curve = NULL;
+    CURVE* simp_curv = NULL;
+    SPAunit_vector normal(in_normal);
+    SPAinterval off_domain = in_off_domain;
+    double off_radius = 0.0;
+
+    if(geometry) {
+        if(geometry->type() == 11) {
+            if(dist_law->constant()) {
+                if(twist_law->zero(SPAresabs)) {
+                    if(GET_ALGORITHMIC_VERSION() >= AcisVersion(12, 0, 0)) {
+                        curve_law_data* v39 = ACIS_NEW curve_law_data(*geometry, off_domain.start_pt(), off_domain.end_pt());
+                        curve_law_data* cld = v39;
+                        curve_law* v41 = ACIS_NEW curve_law(cld);
+                        law* geom_law = v41;
+                        cld->remove();
+                        CURVE* simp_curv = test_for_line(geom_law, off_domain);
+                        if(!simp_curv) simp_curv = test_for_circle(geom_law, off_domain);
+                        if(simp_curv) geometry = &(straight&)simp_curv->equation();
+                        geom_law->remove();
+                    }
+                }
+            }
+        }
+    }
+    if(dist_law->constant() && SPAresabs > fabs(dist_law->eval(1.0))) {
+        offset_curve = (intcurve*)geometry->make_copy();
+    } else {
+        switch(geometry->type()) {
+            case 1:
+                if(dist_law->constant() && twist_law->zero(SPAresabs)) {
+                    double offset_dist = dist_law->eval(1.0);
+                    const straight* straight_geom = (const straight*)geometry;
+                    SPAposition str_root(((straight*)geometry)->root_point);
+                    SPAunit_vector str_dir(((straight*)geometry)->direction);
+                    SPAunit_vector off_dir = normalise(str_dir * normal);
+                    straight* v44 = ACIS_NEW straight(str_root + offset_dist * off_dir, str_dir, 1.0);
+                    offset_curve = (intcurve*)v44;
+                    //*(long double*)(v44 + 56) = straight_geom->param_scale;//不懂
+                } else {
+                    offset_curve = (intcurve*)gme_sg_offset_planar_curve((curve&)*geometry, off_domain, SPAresfit, dist_law, twist_law, normal, 0, SPAresabs);
+                }
+                break;
+            case 2:
+                if(get_circle_offset_radius((curve*)geometry, in_normal, dist_law, twist_law, off_radius)) {
+                    const ellipse* ell_geom = (const ellipse*)geometry;
+                    double maj_len = ell_geom->major_axis.len();
+                    if(off_radius <= SPAresabs) {
+                        degenerate_curve* v48 = ACIS_NEW degenerate_curve(ell_geom->centre);
+                        offset_curve = (intcurve*)v48;
+                    } else {
+                        SPAvector off_major = off_radius / maj_len * ell_geom->major_axis;
+                        ellipse* v46 = ACIS_NEW ellipse(ell_geom->centre, ell_geom->normal, off_major, 1.0, 0.0);
+                        offset_curve = (intcurve*)v46;
+                    }
+                } else {
+                    offset_curve = (intcurve*)gme_sg_offset_planar_curve((curve&)*geometry, off_domain, SPAresfit, dist_law, twist_law, normal, 0, SPAresabs);
+                }
+                break;
+            case 11:
+                offset_curve = (intcurve*)gme_sg_offset_planar_curve((curve&)geometry, off_domain, SPAresfit, dist_law, twist_law, normal, 0, SPAresabs);
+                if(offset_curve->type() == 11) {
+                    int is_degenerate = 1;
+                    bs3_curve_def* bs = offset_curve->cur(-1.0, 0);
+                    int num_ctrlpts = 0;
+                    SPAposition* ctrlpts = nullptr;
+                    bs3_curve_control_points(bs, num_ctrlpts, ctrlpts, 0);
+                    double resabs_sq = SPAresabs * SPAresabs;
+                    for(int i = 0; i < num_ctrlpts && is_degenerate; ++i) {
+                        SPAposition this_pos(ctrlpts[i]);
+                        for(int j = num_ctrlpts - 1; j > i; --j) {
+                            SPAvector v19 = this_pos - ctrlpts[j];
+                            if(v19.len_sq() >= resabs_sq) {
+                                is_degenerate = 0;
+                                break;
+                            }
+                        }
+                    }
+                    if(is_degenerate) {
+                        if(offset_curve) {
+                            ACIS_DELETE offset_curve;
+                        } else {
+                            offset_curve = nullptr;
+                        }
+                        degenerate_curve* v37 = ACIS_NEW degenerate_curve(*ctrlpts);
+                        offset_curve = (intcurve*)v37;
+                    }
+                    ACIS_DELETE[] STD_CAST ctrlpts;
+                }
+                break;
+        }
+    }
+    if(simp_curv) simp_curv->lose();
+    return offset_curve;
+}
 
 COEDGE* sg_offset_pl_coedge(COEDGE* c, law* dist_law, law* twist_law, const SPAunit_vector& n) {
     EDGE* e = c->edge();
@@ -1214,7 +1060,8 @@ void make_same_vertex_pointers(VERTEX* vert1, VERTEX* vert2, COEDGE* this_coedge
                 else
                     check_prev = nullptr;
             }
-        } else if(this_coedge->sense()) {
+        } 
+        else if(this_coedge->sense()) {
             this_edge->set_start(vert2, 1, 1);
         } else {
             this_edge->set_end(vert2, 1, 1);
@@ -1239,7 +1086,8 @@ void make_same_vertex_pointers(VERTEX* vert1, VERTEX* vert2, COEDGE* this_coedge
                 next_coedge->edge()->set_param_range(nullptr);
             }
         }
-    } else {
+    } 
+    else {
         if(next_coedge->sense())
             next_edge->set_end(vert1, 1, 1);
         else
@@ -1319,13 +1167,13 @@ int check_gap_type(COEDGE* this_orig_coedge, COEDGE* prev_orig_coedge, const SPA
 
 int get_circle_offset_radius(curve* geometry, const SPAunit_vector& normal, law* dist_law, law* twist_law, double& off_radius) {
     int answer = 0;
-    if(geometry->type() == 2 && *(double*)&geometry[3].subset_range.type_data == 1.0) {
+    if(geometry->type() == 2 && ((ellipse*)geometry)->radius_ratio == 1.0) {
         if(dist_law->constant()) {
-            if(twist_law->zero(double(SPAresabs))) {
+            if(twist_law->zero(SPAresabs)) {
                 double offset_dist = dist_law->eval(1.0);
-                double maj_len = ((SPAvector*)&geometry[1].subset_range.type_data)->len();              // 不懂
-                double dotProduct = *((const SPAvector*)&geometry[2].subset_range.type_data) % normal;  // 不确定
-                if(GET_ALGORITHMIC_VERSION() < AcisVersion(31, 0, 0) || (fabs(dotProduct) > 1.0 - 10.0 * double(SPAresmch))) {
+                double maj_len = ((ellipse*)geometry)->major_axis.len();
+                double dotProduct = ((ellipse*)geometry)->normal % normal;
+                if(GET_ALGORITHMIC_VERSION() < AcisVersion(31, 0, 0) || (fabs(dotProduct) > 1.0 - 10.0 * SPAresmch)) {
                     if(dotProduct <= 0.0)
                         off_radius = maj_len - offset_dist;
                     else
@@ -1915,8 +1763,7 @@ int sg_close_offset_gap(offset_segment_list& seg_list, offset_segment*& this_seg
             if(gap_type == corner) {
                 close_gap = sg_close_with_corner(this_seg, dist_law, common_pt, p1, p2, this_coedgea, next_coedge, common_vertexa, iKeepMiniTopo);
                 if(close_gap) display_gap_after_close(this_coedgea, next_coedge, (char*)"corner");
-            } 
-            else {
+            } else {
                 if(gap_type != natural) return 0;
                 if(GET_ALGORITHMIC_VERSION() >= AcisVersion(17, 0, 0)) {
                     ofst_natural_extender naturalExtender;
@@ -1926,7 +1773,8 @@ int sg_close_offset_gap(offset_segment_list& seg_list, offset_segment*& this_seg
                     } else if(iKeepMiniTopo) {
                         sys_error(OFFSET_CURVE_TOPO_CHANGED);
                     }
-                } else {
+                } 
+                else {
                     close_gap = sg_close_with_natural2(this_seg, dist_law, common_pt, p1, p2, this_coedgea, next_coedge, common_vertexa);
                 }
             }
@@ -2006,8 +1854,12 @@ int sg_close_offset_gap(offset_segment_list& seg_list, offset_segment*& this_seg
                             }
                         }
                     }*/
-                if(tan1 % iStartOfstDir < 0.0) new_seg->set_start_in();
-                if(tan2 % iEndOfstDir < 0.0) new_seg->set_end_in();
+                if(tan1 % iStartOfstDir < 0.0) {
+                    new_seg->set_start_in();
+                }
+                if(tan2 % iEndOfstDir < 0.0) {
+                    new_seg->set_end_in();
+                }
             }
             gap_coedge->set_wire(owner, 1);
             this_seg = new_seg;
@@ -2098,7 +1950,8 @@ BODY* sg_offset_planar_wire_internal(WIRE* wire, const TRANSFORM* wire_transf, l
             if(CUR_is_intcurve(prev_coedge->edge()->geometry()->equation())) {
                 ENTITY_LIST new_edges;
                 sg_split_edge_at_disc(prev_coedge->edge(), new_edges, 1);
-            } else {
+            } 
+            else {
                 if(GET_ALGORITHMIC_VERSION() >= AcisVersion(16, 0, 1)) {
                     if(dist_law->constant()) {
                         if(this_coedge) {
@@ -2142,7 +1995,8 @@ BODY* sg_offset_planar_wire_internal(WIRE* wire, const TRANSFORM* wire_transf, l
                     }
                 }
             }
-        } while(this_coedge != prev_coedge && this_coedge != start_coedge);
+        }
+        while(this_coedge != prev_coedge && this_coedge != start_coedge);
         this_coedge = start_coedge;
     }
 
@@ -2201,7 +2055,7 @@ BODY* sg_offset_planar_wire_internal(WIRE* wire, const TRANSFORM* wire_transf, l
         delete_entity(offset_wire);
         offset_wire = nullptr;
     } 
-    else 
+    else
     {
         COEDGE* c_original = (COEDGE*)orig_coedge_list[0];
         COEDGE* c_offset = (COEDGE*)off_coedge_list[0];
@@ -2216,7 +2070,7 @@ BODY* sg_offset_planar_wire_internal(WIRE* wire, const TRANSFORM* wire_transf, l
         COEDGE* prev_orig_coedge = (COEDGE*)orig_coedge_list[0];
         prev_off_coedge->set_wire(offset_wire, 1);
         COEDGE* first_off_coedge = prev_off_coedge;
-        option_header* anno = find_option("annotations");  // 不懂两个anno
+        option_header* anno = find_option("annotations");
         if(anno->on()) {
             ANNOTATION* v511;
             if(anno->on()) {
@@ -2236,16 +2090,20 @@ BODY* sg_offset_planar_wire_internal(WIRE* wire, const TRANSFORM* wire_transf, l
             int nni = -1;
             int ii = 1;
             int old_i = i;
-            if(close_type == natural) {
-                if(GET_ALGORITHMIC_VERSION() >= AcisVersion(20, 0, 0)) {
+            if(close_type == natural) 
+            {
+                if(GET_ALGORITHMIC_VERSION() >= AcisVersion(20, 0, 0))
+                {
                     int j;
-                    for(j = i;; ++j) {
+                    for(j = i;; ++j) 
+                    {
                         if(j >= coedge_count) goto LABEL_114;
                         if(((COEDGE*)off_coedge_list[j])->edge()->geometry()) break;
                     }
                     nni = j;
                 LABEL_114:
-                    if(nni > i) {
+                    if(nni > i) 
+                    {
                         ii = 0;
                         i = nni;
                     }
@@ -2265,7 +2123,6 @@ BODY* sg_offset_planar_wire_internal(WIRE* wire, const TRANSFORM* wire_transf, l
                     }
                     v517 = nullptr;
                 }
-
                 option_header* remnulledge = find_option("rem_null_edge");
                 if(prev_off_coedge->edge()->geometry() || (this_off_coedge->edge()->geometry()) || !remnulledge->on()) {
                     if(this_off_coedge->edge()->geometry()) goto LABEL_134;
@@ -2290,8 +2147,7 @@ BODY* sg_offset_planar_wire_internal(WIRE* wire, const TRANSFORM* wire_transf, l
                                 VERTEX* vert1 = prev_off_coedge->end();
                                 make_same_vertex_pointers(vert1, vert2, prev_off_coedge, this_off_coedge, 1);
                             }
-                        } 
-                        else {
+                        } else {
                             if(twist_law->zero(SPAresabs)) {
                                 int dist_law_index = i - 1;
                                 double offset_dist = 0.0;
@@ -2320,10 +2176,8 @@ BODY* sg_offset_planar_wire_internal(WIRE* wire, const TRANSFORM* wire_transf, l
                                                 is_offset_by_radius = is_circle_offset_by_radius(&((curve&)v110), wire_normal, local_law, twist_law);
                                                 local_law->remove();
                                             }
-                                            skipStartDegOffsetCoedges = (!prev_off_coedge || (!(prev_off_coedge->edge()->geometry())) && !is_offset_by_radius);
-                                        } 
-                                        else if(i + 1 == coedge_count && prev_off_coedge)
-                                        {
+                                            skipStartDegOffsetCoedges = (!prev_off_coedge || !(prev_off_coedge->edge()->geometry()) && !is_offset_by_radius);
+                                        } else if(i + 1 == coedge_count && prev_off_coedge) {
                                             if(check_offset) {
                                                 COEDGE* next_orig_coedge = prev_orig_coedge->next();
                                                 law* v431 = edge_dist_law_to_coedge_dist_law(next_orig_coedge, next_orig_coedge->edge(), dist_law);
@@ -2331,7 +2185,7 @@ BODY* sg_offset_planar_wire_internal(WIRE* wire, const TRANSFORM* wire_transf, l
                                                 v431->remove();
                                             }
                                             COEDGE* next_coedge = prev_off_coedge->next();
-                                            int skipStartDegOffsetCoedges = (!next_coedge || (!next_coedge->edge()->geometry()) && !is_offset_by_radius);
+                                            skipStartDegOffsetCoedges = (!next_coedge || (!next_coedge->edge()->geometry()) && !is_offset_by_radius);
                                             next_coedge = nullptr;
                                         }
                                     }
@@ -2351,8 +2205,7 @@ BODY* sg_offset_planar_wire_internal(WIRE* wire, const TRANSFORM* wire_transf, l
                                         law* v545 = dist_laws[dist_law_index];
                                         VERTEX* common_vertex = prev_orig_coedge->end();
                                         did_close = sg_close_offset_gap(seg_list, curr_seg, prev_off_coedge, common_vertex, offsetDir, startOfstDir, endOfstDir, dist_laws[dist_law_index], arc, iKeepMiniTopo, skipbackup);
-                                    } 
-                                    else if(check_status == 2) {
+                                    } else if(check_status == 2) {
                                         law* v547 = dist_laws[dist_law_index];
                                         VERTEX* v548 = prev_orig_coedge->end();
                                         did_close = sg_close_offset_gap(seg_list, curr_seg, prev_off_coedge, v548, offsetDir, startOfstDir, endOfstDir, v547, close_type, iKeepMiniTopo, skipbackup);
@@ -2385,7 +2238,9 @@ BODY* sg_offset_planar_wire_internal(WIRE* wire, const TRANSFORM* wire_transf, l
                     v426->lose();
                     this_off_coedge->lose();
                     degen_off_coed_deleted = 1;
-                } else {
+                } 
+                else 
+                {
                     SPAposition prev_pos(prev_off_coedge->start()->geometry()->coords());
                     SPAposition this_pos(this_off_coedge->start()->geometry()->coords());
                     if(SPAresabs <= (prev_pos - this_pos).len()) goto LABEL_134;
@@ -2461,13 +2316,11 @@ BODY* sg_offset_planar_wire_internal(WIRE* wire, const TRANSFORM* wire_transf, l
     twist_laws = nullptr;
     if(resignal_no || acis_interrupted()) sys_error(resignal_no, error_info_base_ptr);
     BODY* offset_wire_body = ACIS_NEW BODY(offset_wire);
-    return offset_wire_body;
     TRANSFORM* v441 = nullptr;
     if(wire_transf) {
         v441 = ACIS_NEW TRANSFORM((SPAtransf)wire_transf->transform());  // 不确定
     }
     offset_wire_body->set_transform(v441, 1);
-
 
     if(woffset_module_header.debug_level >= 30) {
         acis_fprintf(debug_file_ptr, "!!! seg_list before sg_trim_offset_wire()\n");
@@ -2550,8 +2403,6 @@ BODY* sg_offset_planar_wire_internal(WIRE* wire, const TRANSFORM* wire_transf, l
             this_seg = next_seg;
         }
     }
-  
-
 
     SHELL* shell = nullptr;
     if(offset_wire_body->lump()) {
@@ -2809,8 +2660,7 @@ LABEL_319:
         for(EDGE* edge = first_edge; edge; edge = (EDGE*)edges.next()) {
             if(edge->geometry()) {
                 const curve& edge_cur = edge->geometry()->equation();
-                if(((curve&)edge_cur).type() == 11) 
-                {
+                if(((curve&)edge_cur).type() == 11) {
                     SPAposition pt;
                     SPAvector dpdt;
                     SPAvector dp2dt2;
@@ -2892,7 +2742,7 @@ LABEL_319:
                         adjust_edge_start = 1;
                         start_par = start_par + start_t_step * dir;
                     }
-                    if(end_curvature.len() > 1.0/ SPAresabs) {
+                    if(end_curvature.len() > 1.0 / SPAresabs) {
                         double v350 = end_t_step;
                         double v311 = 2.0;
                         SPAposition v668;
@@ -2910,7 +2760,7 @@ LABEL_319:
                             while(1) {
                                 if(same_point(v668, pt, SPAresabs)) break;
                                 double v365 = (v391 + v364) / 2.0;
-                                int v641 = edge_cur.evaluate(v365, pt, _deriv_ptr, 2,evaluate_curve_unknown);
+                                int v641 = edge_cur.evaluate(v365, pt, _deriv_ptr, 2, evaluate_curve_unknown);
                                 if(conv_curvature(*_deriv_ptr[0], *_deriv_ptr[1]).len() <= 1.0 / SPAresabs)
                                     v364 = v365;
                                 else
@@ -2973,7 +2823,7 @@ LABEL_319:
     display_wire_offset_io(wire, dist_law, offset_wire_body);
     return offset_wire_body;
 }
-BODY* gme_sg_offset_planar_wire(BODY* wire_body, double offset_dist,const SPAunit_vector& wire_normal, sg_gap_type close_type, int add_attribs, int trim, int zero_length, int overlap) {
+BODY* gme_sg_offset_planar_wire(BODY* wire_body, double offset_dist, const SPAunit_vector& wire_normal, sg_gap_type close_type, int add_attribs, int trim, int zero_length, int overlap) {
     BODY* result_body = nullptr;
     if(wire_body) {
         TRANSFORM* wire_transf = wire_body->transform();
@@ -2987,7 +2837,7 @@ BODY* gme_sg_offset_planar_wire(BODY* wire_body, double offset_dist,const SPAuni
             transf_wire_normal = wire_normal;
         }
         for(WIRE* wire = wire_body->wire(); wire; wire = wire->next(PAT_CAN_CREATE)) {
-            BODY* this_body = sg_offset_planar_wire(wire, wire_transf, offset_dist, transf_wire_normal, close_type, add_attribs, trim, zero_length, overlap);
+            BODY* this_body = gme_sg_offset_planar_wire(wire, wire_transf, offset_dist, transf_wire_normal, close_type, add_attribs, trim, zero_length, overlap);
             if(result_body) {
                 do_boolean(this_body, result_body, UNION, SpaAcis::NullObj::get_body_ptr(), SpaAcis::NullObj::get_body_ptr(), NDBOOL_KEEP_NEITHER, SpaAcis::NullObj::get_body_ptr(), nullptr, 0);  //
             }
@@ -2999,9 +2849,86 @@ BODY* gme_sg_offset_planar_wire(BODY* wire_body, double offset_dist,const SPAuni
         for(LUMP* lump = wire_body->lump(); lump; lump = lump->next(PAT_CAN_CREATE)) {
             for(SHELL* shell = lump->shell(); shell; shell = shell->next(PAT_CAN_CREATE)) {
                 for(WIRE* i = shell->wire(); i; i = i->next(PAT_CAN_CREATE)) {
-                    BODY* tool_body = sg_offset_planar_wire(i, wire_transf, offset_dist, transf_wire_normal, close_type, add_attribs, trim, zero_length, overlap);
+                    BODY* tool_body = gme_sg_offset_planar_wire(i, wire_transf, offset_dist, transf_wire_normal, close_type, add_attribs, trim, zero_length, overlap);
                     if(result_body) {
-                        do_boolean(tool_body, result_body, UNION, SpaAcis::NullObj::get_body_ptr(), SpaAcis::NullObj::get_body_ptr(), NDBOOL_KEEP_NEITHER, SpaAcis::NullObj::get_body_ptr(), nullptr, 0);  
+                        do_boolean(tool_body, result_body, UNION, SpaAcis::NullObj::get_body_ptr(), SpaAcis::NullObj::get_body_ptr(), NDBOOL_KEEP_NEITHER, SpaAcis::NullObj::get_body_ptr(), nullptr, 0);
+                    } else {
+                        result_body = tool_body;
+                    }
+                }
+            }
+        }
+    }
+    return result_body;
+}
+
+BODY* gme_sg_offset_planar_wire(BODY* iBaseWireBody, wire_offset_options* iOptions) {
+    BODY* offsetBody = NULL;
+    if(iBaseWireBody && iOptions) {
+        acis_exception error_info_holder(0);
+        exception_save exception_save_mark;
+        exception_save_mark.begin();
+        get_error_mark().buffer_init = 1;
+        law* offsetLaw = iOptions->get_distance_law();
+        law* twistLaw = iOptions->get_twist_law();
+        SPAunit_vector wireNormal = iOptions->get_plane_normal();
+        sg_gap_type gapType = iOptions->get_gap_type();
+        int trim = iOptions->get_trim();
+        int overlap = iOptions->get_overlap();
+        int keepMiniTopo = iOptions->get_keep_minimum_topology();
+        int iAddAttribs = iOptions->get_add_attribs();
+        int iZeroLength = iOptions->get_zero_length();
+        if(!twistLaw) {
+            constant_law* v13 = ACIS_NEW constant_law(0.0);
+            twistLaw = v13;
+        }
+        offsetBody = gme_sg_offset_planar_wire(iBaseWireBody, offsetLaw, twistLaw, wireNormal, gapType, iAddAttribs, trim, iZeroLength, overlap, keepMiniTopo);
+        if(offsetLaw) offsetLaw->remove();
+        if(twistLaw) twistLaw->remove();
+        if(acis_interrupted()) sys_error(0);
+    }
+    return offsetBody;
+}
+
+BODY* gme_sg_offset_planar_wire(BODY* wire_body, law* offset_law, law* twist_law, SPAunit_vector& wire_normal, sg_gap_type close_type, int add_attribs, int trim, int zero_length, int overlap, int iKeepMiniTopo) {
+    LUMP* lump;
+    SHELL* shell;
+    WIRE* i;
+    BODY* result_body = NULL;
+    if(wire_body) {
+        TRANSFORM* wire_transf = wire_body->transform();
+        SPAunit_vector transf_wire_normal;
+        if(wire_transf) {
+            SPAtransf& v23 = (SPAtransf&)wire_transf->transform();
+            const SPAtransf& v10 = (const SPAtransf&)v23.inverse();
+            SPAunit_vector v11 = wire_normal * v10;
+            SPAvector tmp(v11);
+            transf_wire_normal = normalise(tmp);
+        } else {
+            transf_wire_normal = wire_normal;
+        }
+        for(WIRE* wire = wire_body->wire(); wire; wire = wire->next(PAT_CAN_CREATE)) {
+            BODY* this_body = gme_sg_offset_planar_wire(wire, wire_transf, offset_law, twist_law, transf_wire_normal, close_type, add_attribs, trim, zero_length, overlap, iKeepMiniTopo);
+            if(result_body) {
+                if(trim) {
+                    do_boolean(this_body, result_body, UNION, SpaAcis::NullObj::get_body_ptr(), SpaAcis::NullObj::get_body_ptr(), NDBOOL_KEEP_NEITHER, SpaAcis::NullObj::get_body_ptr(), nullptr, 0);
+                } else {
+                    amalgamate_bodies(this_body, result_body);
+                }
+            } else {
+                result_body = this_body;
+            }
+        }
+        for(lump = wire_body->lump(); lump; lump = lump->next(PAT_CAN_CREATE)) {
+            for(shell = lump->shell(); shell; shell = shell->next(PAT_CAN_CREATE)) {
+                for(i = shell->wire(); i; i = i->next(PAT_CAN_CREATE)) {
+                    BODY* tool_body = gme_sg_offset_planar_wire(i, wire_transf, offset_law, twist_law, transf_wire_normal, close_type, add_attribs, trim, zero_length, overlap, iKeepMiniTopo);
+                    if(result_body) {
+                        if(trim) {
+                            do_boolean(tool_body, result_body, UNION, SpaAcis::NullObj::get_body_ptr(), SpaAcis::NullObj::get_body_ptr(), NDBOOL_KEEP_NEITHER, SpaAcis::NullObj::get_body_ptr(), nullptr, 0);
+                        } else {
+                            amalgamate_bodies(tool_body, result_body);
+                        }
                     } else {
                         result_body = tool_body;
                     }

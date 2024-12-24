@@ -264,7 +264,6 @@ int ofst_edge_smooth_manager::init(ENTITY_LIST* iEdges, int iMaxSmoothLevel, int
         this->mLastSmoothLevel = ACIS_NEW int[mNumEdges];
         this->mNumIntersections = ACIS_NEW int[mNumEdges];
         this->mNumOverlaps = ACIS_NEW int[mNumEdges];
-
         if(this->mSmoothLevel && this->mNumIntersections && this->mNumOverlaps) {
             for(int i = 0; i < this->mNumEdges; ++i) {
                 this->mSmoothLevel[i] = 0;

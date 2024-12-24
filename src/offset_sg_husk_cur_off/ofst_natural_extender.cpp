@@ -11,6 +11,7 @@
 #include "acis/geometry.hxx"
 #include "acis/intdef.hxx"
 #include "acis/vrtx_utl.hxx"
+#include "acis//allcurve.hxx"
 
 void release_intersection_data(curve_curve_int* mIntsectData) {
     curve_curve_int* nextIntsectData;
@@ -116,38 +117,41 @@ ofst_natural_extender::~ofst_natural_extender() {
     }
 }
 int ofst_natural_extender::extend(offset_segment* iOfstSegment, law* iDistLaw, COEDGE* iFstOfstCoedge, COEDGE* iSndOfstCoedge, VERTEX* iCommonVeertex, int iNinimumTopo, int skipbackup) {
-    return NULL;
-    // double Curve2ExtParamLen;  // [rsp+38h] [rbp-20h] BYREF
-    // double Curve1ExtParamLen;  // [rsp+40h] [rbp-18h] BYREF
-    // long double minParamLength;     // [rsp+48h] [rbp-10h]
+ 
+     double Curve2ExtParamLen;  
+     double Curve1ExtParamLen;  
+     long double minParamLength;
 
-    // int retOk = 0;
-    // if(this->init(iOfstSegment, iDistLaw, iFstOfstCoedge, iSndOfstCoedge, iCommonVeertex))
-    //{
-    //     retOk = this->try_old_extension();
-    //     if(!retOk && this->comp_init_extension_length(Curve1ExtParamLen, Curve2ExtParamLen))
-    //     {
-    //         retOk = this->try_new_extension(Curve1ExtParamLen, Curve2ExtParamLen);
-    //         if(!retOk && this->mFailCase == 4)
-    //         {
-    //             Curve1ExtParamLen = Curve1ExtParamLen * 2.0;
-    //             Curve2ExtParamLen = Curve2ExtParamLen * 2.0;
-    //         retOk = this->try_new_extension(Curve1ExtParamLen, Curve2ExtParamLen);
-    //         }
-    //         if(!retOk && this->mFailCase == 4)
-    //         {
-    //             minParamLength = *(long double*)&UNDEFC::`vftable'[45]; if(Curve1ExtParamLen <= 0.0 || Curve1ExtParamLen >= 0.01) Curve1ExtParamLen = Curve1ExtParamLen * 2.0;
-    //             else Curve1ExtParamLen = *(double*)&UNDEFC::`vftable'[45]; if(Curve2ExtParamLen <= 0.0 || Curve2ExtParamLen >= 0.01) Curve2ExtParamLen = Curve2ExtParamLen * 2.0;
-    //             else Curve2ExtParamLen = *(double*)& UNDEFC::`vftable'[45]; retOk = ofst_natural_extender::try_new_extension(this, Curve1ExtParamLen, Curve2ExtParamLen);
-    //         }
-    //     }
-    //     if(retOk) this->mExtensionType = 2;
-    // }
-    // if(!retOk && !iNinimumTopo && !skipbackup) {
-    //     retOk = this->extend_with_arc();
-    //     if(retOk) this->mExtensionType = 1;
-    // }
-    // return retOk;
+     int retOk = 0;
+     if(this->init(iOfstSegment, iDistLaw, iFstOfstCoedge, iSndOfstCoedge, iCommonVeertex))
+    {
+         retOk = this->try_old_extension();
+         if(!retOk && this->comp_init_extension_length(Curve1ExtParamLen, Curve2ExtParamLen))
+         {
+             retOk = this->try_new_extension(Curve1ExtParamLen, Curve2ExtParamLen);
+             if(!retOk && this->mFailCase == 4)
+             {
+                 Curve1ExtParamLen = Curve1ExtParamLen * 2.0;
+                 Curve2ExtParamLen = Curve2ExtParamLen * 2.0;
+                 retOk = this->try_new_extension(Curve1ExtParamLen, Curve2ExtParamLen);
+             }
+             //if(!retOk && this->mFailCase == 4)
+             //{
+             //    minParamLength = ; 
+             //    if(Curve1ExtParamLen <= 0.0 || Curve1ExtParamLen >= 0.01) Curve1ExtParamLen = Curve1ExtParamLen * 2.0;
+             //    else Curve1ExtParamLen = UNDEFC::`vftable'[45]; 
+             //    if(Curve2ExtParamLen <= 0.0 || Curve2ExtParamLen >= 0.01) Curve2ExtParamLen = Curve2ExtParamLen * 2.0;
+             //    else Curve2ExtParamLen = *(double*)& UNDEFC::`vftable'[45]; 
+             //    retOk = this->try_new_extension(Curve1ExtParamLen, Curve2ExtParamLen);
+             //}
+         }
+         if(retOk) this->mExtensionType = 2;
+     }
+     if(!retOk && !iNinimumTopo && !skipbackup) {
+         retOk = this->extend_with_arc();
+         if(retOk) this->mExtensionType = 1;
+     }
+     return retOk;
 }
 int ofst_natural_extender::get_extension_type() {
     return this->mExtensionType;
@@ -209,24 +213,24 @@ int ofst_natural_extender::try_old_extension() {
     if(v2) {
         if(mC1GeomCopy) {
             if(result.ok()) {
-                mC1GeomCopy->~intcurve();
+                mC1GeomCopy=nullptr;
             } else {
                 const int_cur& ic1 = mC1GeomCopy->get_int_cur();
                 intcurve* mC1Geom = (intcurve*)this->mC1Geom;
                 mC1Geom->replace_int_cur((int_cur&)ic1);
                 this->mC1Geom->change_event();
-                mC1GeomCopy->~intcurve();
+
             }
         }
         if(mC2GeomCopy) {
             if(result.ok()) {
-                mC2GeomCopy->~intcurve();
+                mC2GeomCopy = nullptr;
             } else {
                 const int_cur& ic2 = mC2GeomCopy->get_int_cur();
                 intcurve* mC2Geom = (intcurve*)this->mC2Geom;
                 mC2Geom->replace_int_cur((int_cur&)ic2);
                 this->mC2Geom->change_event();
-                mC2GeomCopy->~intcurve();
+                mC2GeomCopy = nullptr;
             }
         }
     } else if(copied_curves) {
@@ -247,7 +251,6 @@ int ofst_natural_extender::try_old_extension() {
 }
 int ofst_natural_extender::try_new_extension(const double iCurve1ExtParamLen, const double iCurve2ExtParamLen) {
     /* if(!this->mC1 || !this->mC1Geom || !this->mC2 || !this->mC2Geom) _wassert(L"mC1 && mC1Geom != NULL && mC2 && mC2Geom != NULL", L"E:\\build\\acis\\NTSwin_b64_debug\\SPAofst\\offset_sg_husk_cur_off.m\\src\\ofst_natural_extender.cpp", 0x22Eu);*/
-    // 不懂
     int retOk = 0;
     intcurve* mC1GeomCopy = nullptr;
     intcurve* mC2GeomCopy = nullptr;
@@ -262,7 +265,7 @@ int ofst_natural_extender::try_new_extension(const double iCurve1ExtParamLen, co
         }
     }
     if(extend_curve_geom(this->mC1Geom, iCurve1ExtParamLen, this->mCurve1AtStart) && extend_curve_geom(this->mC2Geom, iCurve2ExtParamLen, this->mCurve2AtStart)) {
-        debug_display_natural_extender(this->mC1, this->mC2, 0i64, this->mC1Geom, this->mC2Geom);
+        debug_display_natural_extender(this->mC1, this->mC2, nullptr, this->mC1Geom, this->mC2Geom);
         set_global_error_info();
         outcome result(0, (error_info*)0);
         problems_list_prop problems_prop;
@@ -305,45 +308,34 @@ int ofst_natural_extender::try_new_extension(const double iCurve1ExtParamLen, co
     }
     if(mC1GeomCopy) {
         if(retOk) {
-            // v14 = mC1GeomCopy;
-            // v32 = mC1GeomCopy->~intcurve;
-            // v33 = ((__int64(__fastcall*)(intcurve*, __int64))v32)(mC1GeomCopy, 1i64);
-        } else {
+            mC1GeomCopy = nullptr;
+        } 
+        else {
             const int_cur& ic1 = mC1GeomCopy->get_int_cur();
             intcurve* mC1Geom = (intcurve*)this->mC1Geom;
             mC1Geom->replace_int_cur((int_cur&)ic1);
             this->mC1Geom->change_event();
             this->mC1->edge()->set_geometry(make_curve(*this->mC1Geom), 1);
-            // if(mC1GeomCopy)
-            //{
-            //     //v38 = v15->~intcurve;//不懂
-            //     //v39 = ((__int64(__fastcall*)(intcurve*, __int64))v38)(v15, 1i64);
-            // }
-            // else {
-            //     v39 = 0;
-            // }
+            if(mC1GeomCopy)
+            {
+               mC1GeomCopy = nullptr;
+            }
         }
     }
     if(mC2GeomCopy) {
         if(retOk) {
-            // v16 = mC2GeomCopy;
-            // v40 = mC2GeomCopy->~intcurve;
-            // v41 = ((__int64(__fastcall*)(intcurve*, __int64))v40)(mC2GeomCopy, 1i64);
-        } else {
+            mC2GeomCopy = nullptr;
+        } 
+        else {
             const int_cur& ic2 = mC2GeomCopy->get_int_cur();
             intcurve* mC2Geom = (intcurve*)this->mC2Geom;
             mC2Geom->replace_int_cur((int_cur&)ic2);
             this->mC2Geom->change_event();
             this->mC2->edge()->set_geometry(make_curve(*this->mC2Geom), 1);
-            // if(mC2GeomCopy)
-            //{
-            //     //v46 = v17->~intcurve;
-            //     //v47 = ((__int64(__fastcall*)(intcurve*, __int64))v46)(v17, 1i64);
-            // }
-            // else
-            //{
-            //     v47 = 0i64;
-            // }
+            if(mC2GeomCopy)
+            {
+                mC2GeomCopy = nullptr;
+            }
         }
     }
     return retOk;
@@ -419,20 +411,20 @@ curve_curve_int* ofst_natural_extender::comp_intersections() {
     /*  if(!this->mOfstSegment || !this->mC1 || !this->mC2) _wassert(L"mOfstSegment && mC1 && mC2", L"E:\\build\\acis\\NTSwin_b64_debug\\SPAofst\\offset_sg_husk_cur_off.m\\src\\ofst_natural_extender.cpp", 0x128u);*/
     if(this->mC1Geom && this->mC2Geom) {
         SPAbox box_cur;
-        SPAinterval v1 = this->mC1Geom->param_range(box_cur);
+        SPAinterval v1 = this->mC1Geom->param_range();
         SPAinterval v2 = this->mC2Geom->param_range();
         if(!v1.infinite()) goto LABEL_10;
         if(v2.infinite()) {
             SPAinterval tmp_int(-15000.0, 15000.0);
-            SPAbox v47(tmp_int, tmp_int, tmp_int);
-            box_cur = v47;
-        } else {
+            box_cur= SPAbox(tmp_int, tmp_int, tmp_int);
+        } 
+        else {
         LABEL_10:
             SPAbox b2 = this->mC2Geom->bound((const SPAinterval)this->mC2Geom->param_range());
             SPAbox b1 = this->mC1Geom->bound((const SPAinterval)this->mC1Geom->param_range());
             box_cur = b1 | b2;
         }
-        intersections = int_cur_cur(*this->mC1Geom, *this->mC2Geom, box_cur, double(SPAresabs) * 0.1);
+        intersections = int_cur_cur(*this->mC1Geom, *this->mC2Geom, box_cur, SPAresabs * 0.1);
         /*if(Debug_Break_Active("sg_close_with_natural2", "WIRE-OFFSET"))
         {
             if(get_breakpoint_callback()) {
@@ -484,7 +476,7 @@ int ofst_natural_extender::comp_init_extension_length(double& oCurve1ExtParamLen
     comp_curve_end_info(this->mC1Geom, this->mC1End, c1Tangent);
     if(this->mCurve1AtStart) c1Tangent = -c1Tangent;
     double c1TangentLen = c1Tangent.len();
-    if(double(SPAresabs) > c1TangentLen) {
+    if(SPAresabs > c1TangentLen) {
         retVal = 0;
         this->mFailCase = 3;
     }
@@ -493,7 +485,7 @@ int ofst_natural_extender::comp_init_extension_length(double& oCurve1ExtParamLen
         comp_curve_end_info(this->mC2Geom, this->mC2Start, c2Tangent);
         if(this->mCurve2AtStart) c2Tangent = -c2Tangent;
         double c2TangentLen = c2Tangent.len();
-        if(double(SPAresabs) > c2TangentLen) {
+        if(SPAresabs > c2TangentLen) {
             retVal = 0;
             this->mFailCase = 3;
         }

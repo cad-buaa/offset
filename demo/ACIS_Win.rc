@@ -235,6 +235,14 @@ BEGIN
 			MENUITEM "WIRE TEST6",					ID_OFST_WIRE6
 		END
 	END
+	POPUP "TEST"
+    BEGIN
+        MENUITEM "TEST1",                  IDM_TEST
+    END
+	POPUP "INT_CUR"
+    BEGIN
+        MENUITEM "INT_CUR",                  INT_CUR
+    END
     POPUP "&Help"
     BEGIN
         MENUITEM "&About ...",                  IDM_ABOUT

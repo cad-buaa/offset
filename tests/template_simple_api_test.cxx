@@ -37,9 +37,9 @@ TEST_F(Template1_Test, api_make_cuboid) {
     EXPECT_TRUE(same_entity(acis_en, gme_en));  // same_entity可用于比较ENTITY之间的等价性。如果您负责的部分不存在已有的判等接口，则您需要自行提供判等函数
 
     // 存取后判等
-    acis_api_save_entity("C:\\Users\\Shivelino\\Desktop\\gme_en.sat", gme_en);
+    acis_api_save_entity("C:\\Users\\陆相江陆文雅.陆相江\\Desktop\\gme_en.sat", gme_en);
     ENTITY* gme_en_restore = nullptr;
-    acis_api_restore_entity("C:\\Users\\Shivelino\\Desktop\\gme_en.sat", gme_en_restore);
-    acis_api_save_entity("C:\\Users\\Shivelino\\Desktop\\gme_en_restore.sat", gme_en_restore);
+    acis_api_restore_entity("C:\\Users\\陆相江陆文雅.陆相江\\Desktop\\gme_en.sat", gme_en_restore);
+    acis_api_save_entity("C:\\Users\\陆相江陆文雅.陆相江\\Desktop\\gme_en_restore.sat", gme_en_restore);
     EXPECT_TRUE(same_entity(acis_en, gme_en_restore));
 }

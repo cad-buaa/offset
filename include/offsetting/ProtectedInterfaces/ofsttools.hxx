@@ -12,6 +12,7 @@
 #include "acis/off_wire.hxx"
 #include "acis/thmgr.hxx"
 #include "acis/tolerize_ent_opts.hxx"
+#include "acis/fit.hxx"
 
 extern module_debug woffset_module_header;
 extern module_debug trim_offset_wire_module_header;
@@ -151,5 +152,28 @@ void check_vertex_error(const ENTITY_LIST& vertices, ENTITY_LIST& bad_vertices, 
                         teo_data* tedata);  // trim_util.cpp
 
 int do_boolean(BODY* tool_body, BODY* blank_body, BOOL_TYPE type, BODY*& outside_body, BODY*& leftovers, NDBOOL_KEEP ndbool_keep, BODY*& ndbool_result,const glue_options* glue_opts, int quick_failure_preferred);  
+
+
+
+void sg_point_on_offset(curve& orig_curve, SPAinterval& __formal, SPAunit_vector& n, double param, SPAposition& pos, SPAvector& dpos, SPAvector& ddpos, law* dist_law, law* twist_law, evaluate_curve_side side);//kernal模块
+curve* sg_offset_planar_curve_internal(curve& geom, SPAinterval& range, double fit_data, law* dist_law, law* twist_law, SPAunit_vector& off_nor, double tol);//kernal模块
+class curve_interp;
+
+class offset_int_interp : curve_interp 
+{
+    SPAinterval curve_range;
+    law* dist_law;
+    law* twist_law;
+    SPAunit_vector offset_plane;
+    curve* orig_curve;
+    double d[400];
+
+  public:
+    offset_int_interp(curve& orig_spline, SPAinterval& range, SPAunit_vector& curve_normal, int npt, SPAposition* pos_arr, SPAvector* tan_arr, double* par_arr, double fit_data, law* law_dist, law* law_twist);
+};
+
+
+void amalgamate_bodies(BODY* from_body, BODY* to_body);
+
 
 #endif

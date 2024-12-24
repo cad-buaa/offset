@@ -13,6 +13,7 @@
 #include "bool_examples.hxx"
 #include "constructors_examples.hxx"
 #include "incr_examples.hxx"
+#include "intcur.h"
 #include "lop_examples1.hxx"
 #include "mt_examples.hxx"
 #include "ofst_examples1.hxx"
@@ -22,6 +23,7 @@
 #include "stitch_examples.hxx"
 #include "sweep_examples.hxx"
 #include "template_examples.hxx"
+#include "test.h"
 
 // This function converts a Windows menu resource ID into an aei function pointer.
 ACIS_fp find_which_ACIS(WORD id) {
@@ -232,6 +234,13 @@ ACIS_fp find_which_ACIS(WORD id) {
 
         case ID_OFST_WIRE1:
             return aei_OFFSET_WIRE_1;
+
+        case IDM_TEST:
+            return aei_TEST_1;
+
+        case INT_CUR:
+            return aei_INTCUR_1;
+
         default:
             return nullptr;
     }

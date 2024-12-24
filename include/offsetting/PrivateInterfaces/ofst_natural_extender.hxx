@@ -22,9 +22,9 @@ class ofst_natural_extender {
     ~ofst_natural_extender();
     int extend(offset_segment* iOfstSegment, law* iDistLaw, COEDGE* iFstOfstCoedge, COEDGE* iSndOfstCoedge, VERTEX* iCommonVeertex, int iNinimumTopo, int skipbackup);  // 暂未实现
     int get_extension_type();
-    int try_old_extension();                                                                  // 暂未实现
-    int try_new_extension(const double iCurve1ExtParamLen, const double iCurve2ExtParamLen);  // 暂未实现
-    int extend_with_arc();                                                                    // 暂未实现
+    int try_old_extension();                                                                  
+    int try_new_extension(const double iCurve1ExtParamLen, const double iCurve2ExtParamLen);  
+    int extend_with_arc();                                                                    
     int get_coedge_geomtry();
     int init(offset_segment* iOfstSegment, law* iDistLaw, COEDGE* iFstOfstCoedge, COEDGE* iSndOfstCoedge, VERTEX* iCommonVeertex);
     curve_curve_int* comp_intersections();
